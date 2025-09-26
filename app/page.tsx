@@ -7,8 +7,8 @@ import { TrainingSession } from "@/components/training-session"
 import { ProgressDashboard } from "@/components/progress-dashboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import type { GameMode } from "@/lib/game-modes"
-import { QuestionGenerator } from "@/lib/question-generator"
+import { SettingsModal } from "@/components/settings-modal"
+import type { GameMode, GameSession } from "@/lib/game-modes"
 import { ProgressTracker } from "@/lib/progress-tracker"
 import { Music, Settings, BarChart3, ArrowLeft } from "lucide-react"
 
@@ -18,8 +18,8 @@ export default function ChordTrainerApp() {
   const [appState, setAppState] = useState<AppState>("menu")
   const [selectedMode, setSelectedMode] = useState<GameMode>("absolute")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("beginner")
-  const [questionGenerator] = useState(() => new QuestionGenerator())
   const [progressTracker] = useState(() => new ProgressTracker())
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleStartTraining = () => {
     setAppState("training")
@@ -33,7 +33,7 @@ export default function ChordTrainerApp() {
     setAppState("menu")
   }
 
-  const handleSessionComplete = (session: any) => {
+  const handleSessionComplete = (session: GameSession) => {
     const newAchievements = progressTracker.recordSession(session)
     console.log("[v0] Session recorded, new achievements:", newAchievements)
   }
@@ -133,7 +133,15 @@ export default function ChordTrainerApp() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-md">{renderContent()}</div>
+      <div className="container mx-auto px-4 py-6 max-w-md space-y-4">
+        <div className="flex justify-end">
+          <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
+        {renderContent()}
+      </div>
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, RotateCcw, Volume2 } from "lucide-react"
 import { AudioEngine, type ChordProgression } from "@/lib/audio-engine"
@@ -14,6 +14,12 @@ interface AudioControlsProps {
 export function AudioControls({ progression, onPlay, onStop }: AudioControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioEngine] = useState(() => new AudioEngine())
+
+  useEffect(() => {
+    return () => {
+      audioEngine.dispose()
+    }
+  }, [audioEngine])
 
   const handlePlay = async () => {
     if (!progression) return

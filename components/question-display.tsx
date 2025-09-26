@@ -9,6 +9,7 @@ import { AudioControls } from "./audio-controls"
 import { ChordSelector } from "./chord-selector"
 import type { Question, GameMode } from "@/lib/game-modes"
 import { QuestionGenerator } from "@/lib/question-generator"
+import { useSettings } from "@/components/settings-provider"
 import { CheckCircle, XCircle, Lightbulb, Clock } from "lucide-react"
 
 interface QuestionDisplayProps {
@@ -37,6 +38,7 @@ export function QuestionDisplay({
   const [timeSpent, setTimeSpent] = useState(0)
   const [isAnswered, setIsAnswered] = useState(false)
   const questionGenerator = new QuestionGenerator()
+  const { debugMode } = useSettings()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -79,6 +81,14 @@ export function QuestionDisplay({
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
+  const midiToNote = (midi: number) => {
+    const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    if (!Number.isFinite(midi)) return "?"
+    const octave = Math.floor(midi / 12) - 1
+    const pc = pitchClasses[midi % 12]
+    return `${pc}${octave}`
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -111,6 +121,34 @@ export function QuestionDisplay({
         <CardContent className="space-y-4">
           {/* Audio Controls */}
           <AudioControls progression={question.progression} />
+
+          {debugMode && (
+            <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 p-3 text-xs">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">Debug Info</p>
+                <span className="text-muted-foreground">Key: {question.progression.key}</span>
+              </div>
+              <div className="mt-2 space-y-3">
+                {question.progression.chords.map((chord, index) => {
+                  const answer = question.correctAnswer[index]
+                  const noteNames = chord.notes.map(midiToNote).join(", ")
+                  return (
+                    <div key={index} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">Chord #{index + 1}</p>
+                        <span className="text-muted-foreground">Answer: {answer || "?"}</span>
+                      </div>
+                      <p className="text-muted-foreground">
+                        {chord.name}
+                        {chord.romanNumeral ? ` (${chord.romanNumeral})` : ""}
+                      </p>
+                      <p className="font-mono text-muted-foreground">Notes: {noteNames}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">

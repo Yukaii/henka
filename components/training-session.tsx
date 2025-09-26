@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { QuestionDisplay } from "./question-display"
 import { SessionResults } from "./session-results"
 import { GameModeManager, type GameSession, type Question, type GameMode } from "@/lib/game-modes"
@@ -25,11 +25,7 @@ export function TrainingSession({ mode, difficulty, questionSet, onExit, onSessi
   const [showResult, setShowResult] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
-  useEffect(() => {
-    initializeSession()
-  }, [mode, difficulty, questionSet])
-
-  const initializeSession = () => {
+  const initializeSession = useCallback(() => {
     const questionCount = questionSet?.questions.length || 10
     const newSession = gameManager.createSession(mode, difficulty, questionCount)
 
@@ -43,7 +39,11 @@ export function TrainingSession({ mode, difficulty, questionSet, onExit, onSessi
     }
 
     setSession(newSession)
-  }
+  }, [difficulty, gameManager, mode, questionGenerator, questionSet])
+
+  useEffect(() => {
+    initializeSession()
+  }, [initializeSession])
 
   const handleAnswer = (answer: string[]) => {
     if (!currentQuestion || !session) return

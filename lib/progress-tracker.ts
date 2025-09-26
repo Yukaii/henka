@@ -33,6 +33,27 @@ export interface Achievement {
   target?: number
 }
 
+interface StoredData {
+  userStats: UserStats
+  modeStats: ModeStats[]
+  achievements: Achievement[]
+  sessionHistory: GameSession[]
+}
+
+interface StoredDataJSON {
+  userStats: Omit<UserStats, "lastSessionDate"> & { lastSessionDate: string | null }
+  modeStats: ModeStats[]
+  achievements: Array<Omit<Achievement, "unlockedAt"> & { unlockedAt?: string | null }>
+  sessionHistory: Array<Omit<GameSession, "startTime" | "endTime"> & { startTime: string; endTime?: string | null }>
+}
+
+export interface ProgressSummary {
+  recentImprovement: number
+  strongestMode: string
+  weakestMode: string
+  nextMilestone: Achievement | null
+}
+
 export const ACHIEVEMENTS: Achievement[] = [
   {
     id: "first-session",
@@ -91,12 +112,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 export class ProgressTracker {
   private storageKey = "chord-trainer-progress"
 
-  private getStoredData(): {
-    userStats: UserStats
-    modeStats: ModeStats[]
-    achievements: Achievement[]
-    sessionHistory: GameSession[]
-  } {
+  private getStoredData(): StoredData {
     if (typeof window === "undefined") {
       return this.getDefaultData()
     }
@@ -104,17 +120,30 @@ export class ProgressTracker {
     try {
       const stored = localStorage.getItem(this.storageKey)
       if (stored) {
-        const data = JSON.parse(stored)
-        // Convert date strings back to Date objects
-        if (data.userStats.lastSessionDate) {
-          data.userStats.lastSessionDate = new Date(data.userStats.lastSessionDate)
+        const parsed = JSON.parse(stored) as StoredDataJSON
+
+        const userStats: UserStats = {
+          ...parsed.userStats,
+          lastSessionDate: parsed.userStats.lastSessionDate ? new Date(parsed.userStats.lastSessionDate) : null,
         }
-        data.sessionHistory = data.sessionHistory.map((session: any) => ({
+
+        const achievements: Achievement[] = parsed.achievements.map((achievement) => ({
+          ...achievement,
+          unlockedAt: achievement.unlockedAt ? new Date(achievement.unlockedAt) : undefined,
+        }))
+
+        const sessionHistory: GameSession[] = parsed.sessionHistory.map((session) => ({
           ...session,
           startTime: new Date(session.startTime),
           endTime: session.endTime ? new Date(session.endTime) : undefined,
         }))
-        return data
+
+        return {
+          userStats,
+          modeStats: parsed.modeStats,
+          achievements,
+          sessionHistory,
+        }
       }
     } catch (error) {
       console.error("Error loading progress data:", error)
@@ -123,7 +152,7 @@ export class ProgressTracker {
     return this.getDefaultData()
   }
 
-  private getDefaultData() {
+  private getDefaultData(): StoredData {
     return {
       userStats: {
         totalSessions: 0,
@@ -141,7 +170,7 @@ export class ProgressTracker {
     }
   }
 
-  private saveData(data: any): void {
+  private saveData(data: StoredData): void {
     if (typeof window === "undefined") return
 
     try {
@@ -212,7 +241,6 @@ export class ProgressTracker {
     }
 
     // Update mode stats
-    const modeStatKey = `${session.mode}-${session.difficulty}`
     let modeStat = data.modeStats.find((s) => s.mode === session.mode && s.difficulty === session.difficulty)
 
     if (!modeStat) {
@@ -247,10 +275,10 @@ export class ProgressTracker {
     return newAchievements
   }
 
-  private checkAchievements(data: any, session: GameSession): Achievement[] {
+  private checkAchievements(data: StoredData, session: GameSession): Achievement[] {
     const newAchievements: Achievement[] = []
 
-    data.achievements.forEach((achievement: Achievement) => {
+    data.achievements.forEach((achievement) => {
       if (achievement.unlockedAt) return // Already unlocked
 
       let shouldUnlock = false
@@ -285,7 +313,7 @@ export class ProgressTracker {
           break
 
         case "all-difficulties":
-          const difficulties = new Set(data.modeStats.map((s: ModeStats) => s.difficulty))
+          const difficulties = new Set(data.modeStats.map((s) => s.difficulty))
           shouldUnlock =
             difficulties.has("easy") && 
             difficulties.has("beginner") && 
@@ -294,7 +322,7 @@ export class ProgressTracker {
           break
 
         case "both-modes":
-          const modes = new Set(data.modeStats.map((s: ModeStats) => s.mode))
+          const modes = new Set(data.modeStats.map((s) => s.mode))
           shouldUnlock = modes.has("absolute") && modes.has("transpose")
           break
       }
@@ -308,12 +336,7 @@ export class ProgressTracker {
     return newAchievements
   }
 
-  getProgressSummary(): {
-    recentImprovement: number
-    strongestMode: string
-    weakestMode: string
-    nextMilestone: Achievement | null
-  } {
+  getProgressSummary(): ProgressSummary {
     const data = this.getStoredData()
     const recentSessions = data.sessionHistory.slice(-5)
 
@@ -336,8 +359,8 @@ export class ProgressTracker {
 
     const nextMilestone =
       data.achievements
-        .filter((a: Achievement) => !a.unlockedAt && a.target)
-        .sort((a: Achievement, b: Achievement) => {
+        .filter((a) => !a.unlockedAt && a.target)
+        .sort((a, b) => {
           const aProgress = a.progress || 0
           const bProgress = b.progress || 0
           const aRemaining = (a.target || 0) - aProgress

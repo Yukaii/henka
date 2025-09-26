@@ -112,6 +112,9 @@ export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
 export class ChordGenerator {
   private keyToMidi(key: string): number {
     const keyIndex = KEYS.indexOf(key)
+    if (keyIndex === -1) {
+      throw new Error(`Unknown key: ${key}`)
+    }
     return 60 + keyIndex // C4 = 60
   }
 
@@ -129,10 +132,21 @@ export class ChordGenerator {
   }
 
   private romanToDegree(roman: string): number {
-    const cleanRoman = roman.replace(/[maj79°ø]/g, "")
-    const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"]
-    const index = romanNumerals.findIndex((r) => cleanRoman.toUpperCase().startsWith(r))
-    return index
+    const cleanRoman = roman.replace(/[maj79°ø]/g, "").split("/")[0]
+    const romanMap: Record<string, number> = {
+      I: 0,
+      II: 1,
+      III: 2,
+      IV: 3,
+      V: 4,
+      VI: 5,
+      VII: 6,
+    }
+    const degree = romanMap[cleanRoman.toUpperCase()]
+    if (degree === undefined) {
+      throw new Error(`Unknown Roman numeral: ${roman}`)
+    }
+    return degree
   }
 
   private applyInversion(notes: number[], inversion: number): number[] {
@@ -185,12 +199,16 @@ export class ChordGenerator {
     return {
       name: `${root}${chordType === "major" ? "" : chordType}${inversionSuffix}`,
       notes,
+      rootMidi,
       inversion,
     }
   }
 
   generateProgressionFromRoman(romanProgression: string[], key: string, difficulty?: string): ChordProgression {
     const keyIndex = KEYS.indexOf(key)
+    if (keyIndex === -1) {
+      throw new Error(`Unknown key: ${key}`)
+    }
     const scale = [0, 2, 4, 5, 7, 9, 11] // Major scale intervals
 
     const difficultyLevel = difficulty ? DIFFICULTY_LEVELS[difficulty] : null

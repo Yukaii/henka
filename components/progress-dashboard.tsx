@@ -1,11 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { ProgressTracker, type UserStats, type ModeStats, type Achievement } from "@/lib/progress-tracker"
+import {
+  ProgressTracker,
+  type UserStats,
+  type ModeStats,
+  type Achievement,
+  type ProgressSummary,
+} from "@/lib/progress-tracker"
 import { TrendingUp, TrendingDown, Trophy, Target, Award, BarChart3 } from "lucide-react"
 
 interface ProgressDashboardProps {
@@ -17,18 +23,18 @@ export function ProgressDashboard({ onClose }: ProgressDashboardProps) {
   const [userStats, setUserStats] = useState<UserStats | null>(null)
   const [modeStats, setModeStats] = useState<ModeStats[]>([])
   const [achievements, setAchievements] = useState<Achievement[]>([])
-  const [progressSummary, setProgressSummary] = useState<any>(null)
+  const [progressSummary, setProgressSummary] = useState<ProgressSummary | null>(null)
 
-  useEffect(() => {
-    loadProgressData()
-  }, [])
-
-  const loadProgressData = () => {
+  const loadProgressData = useCallback(() => {
     setUserStats(progressTracker.getUserStats())
     setModeStats(progressTracker.getModeStats())
     setAchievements(progressTracker.getAchievements())
     setProgressSummary(progressTracker.getProgressSummary())
-  }
+  }, [progressTracker])
+
+  useEffect(() => {
+    loadProgressData()
+  }, [loadProgressData])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
