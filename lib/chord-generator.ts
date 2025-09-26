@@ -38,9 +38,24 @@ export interface DifficultyLevel {
   useInversions: boolean
   inversionProbability: number // 0-1, probability of using an inversion
   maxInversion: number // Maximum inversion to use (0=root, 1=first, 2=second, etc.)
+  allowedKeys?: string[] // Optional: limit to specific keys for easier modes
 }
 
 export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
+  easy: {
+    name: "Easy",
+    chordTypes: ["major", "minor"],
+    progressionLength: 4,
+    commonProgressions: [
+      ["I", "V", "vi", "IV"],
+      ["vi", "IV", "I", "V"],
+      ["I", "vi", "IV", "V"],
+    ],
+    useInversions: false,
+    inversionProbability: 0,
+    maxInversion: 0,
+    allowedKeys: ["C", "G", "F", "D"], // Limit to common, easy keys
+  },
   beginner: {
     name: "Beginner",
     chordTypes: ["major", "minor"],
@@ -209,7 +224,17 @@ export class ChordGenerator {
       throw new Error(`Unknown difficulty: ${difficulty}`)
     }
 
-    const selectedKey = key || KEYS[Math.floor(Math.random() * KEYS.length)]
+    let selectedKey: string
+    if (key) {
+      selectedKey = key
+    } else if (level.allowedKeys) {
+      // Use one of the allowed keys for this difficulty
+      selectedKey = level.allowedKeys[Math.floor(Math.random() * level.allowedKeys.length)]
+    } else {
+      // Use any key
+      selectedKey = KEYS[Math.floor(Math.random() * KEYS.length)]
+    }
+    
     const progressionTemplate = level.commonProgressions[Math.floor(Math.random() * level.commonProgressions.length)]
 
     return this.generateProgressionFromRoman(progressionTemplate, selectedKey, difficulty)

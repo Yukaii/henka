@@ -19,8 +19,11 @@ export function ChordSelector({ value, onChange, mode, difficulty, disabled, pla
   if (mode === "absolute") {
     // Generate all possible chord combinations for absolute mode
     const chordOptions: string[] = []
+    
+    // Use allowed keys if specified, otherwise use all keys
+    const keysToUse = difficultyLevel.allowedKeys || KEYS
 
-    KEYS.forEach((key) => {
+    keysToUse.forEach((key) => {
       difficultyLevel.chordTypes.forEach((chordType) => {
         const chordName = `${key}${chordType === "major" ? "" : chordType}`
         chordOptions.push(chordName)
