@@ -16,91 +16,61 @@ const DIFFICULTY_ICONS = {
   advanced: Zap,
 }
 
-const DIFFICULTY_COLORS = {
-  beginner: "bg-green-500/10 text-green-400 border-green-500/20",
-  intermediate: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  advanced: "bg-red-500/10 text-red-400 border-red-500/20",
-}
-
 export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: DifficultySelectorProps) {
   return (
     <div className="space-y-4">
-      <div className="text-center space-y-2">
-        <h3 className="text-xl font-semibold">Select Difficulty</h3>
-        <p className="text-muted-foreground text-sm">Choose the complexity level for your training session</p>
-      </div>
+      <h3 className="font-semibold">Difficulty Level</h3>
 
-      <div className="grid gap-4">
+      <div className="space-y-3">
         {Object.entries(DIFFICULTY_LEVELS).map(([key, level]) => {
           const Icon = DIFFICULTY_ICONS[key as keyof typeof DIFFICULTY_ICONS]
-          const colorClass = DIFFICULTY_COLORS[key as keyof typeof DIFFICULTY_COLORS]
 
           return (
             <Card
               key={key}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                selectedDifficulty === key ? "ring-2 ring-primary bg-card/80" : "hover:bg-card/60"
+              className={`cursor-pointer transition-colors ${
+                selectedDifficulty === key ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
               }`}
               onClick={() => onDifficultySelect(key)}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-base">{level.name}</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-primary" />
+                    {level.name}
                   </div>
-                  <div className="flex gap-2">
-                    <Badge className={colorClass}>{level.chordTypes.length} chord types</Badge>
+                  <div className="flex gap-1">
+                    <Badge variant="outline" className="text-xs">
+                      {level.chordTypes.length} types
+                    </Badge>
                     {level.useInversions && (
-                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      <Badge variant="outline" className="text-xs">
                         <RotateCcw className="h-3 w-3" />
-                        Inversions
                       </Badge>
                     )}
                   </div>
-                </div>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="pt-0">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">Chord Types:</p>
                   <div className="flex flex-wrap gap-1">
-                    {level.chordTypes.map((type) => (
-                      <Badge key={type} variant="outline" className="text-xs">
+                    {level.chordTypes.slice(0, 4).map((type) => (
+                      <Badge key={type} variant="secondary" className="text-xs">
                         {type}
                       </Badge>
                     ))}
+                    {level.chordTypes.length > 4 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{level.chordTypes.length - 4} more
+                      </Badge>
+                    )}
                   </div>
-                </div>
-
-                {level.useInversions && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">Inversion Settings:</p>
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <p>• {Math.round(level.inversionProbability * 100)}% chance of inversions</p>
-                      <p>
-                        • Up to{" "}
-                        {level.maxInversion === 1
-                          ? "1st"
-                          : level.maxInversion === 2
-                            ? "2nd"
-                            : level.maxInversion === 3
-                              ? "3rd"
-                              : `${level.maxInversion}th`}{" "}
-                        inversion
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">Common Progressions:</p>
-                  <div className="space-y-1">
-                    {level.commonProgressions.slice(0, 2).map((progression, index) => (
-                      <p key={index} className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                        {progression.join(" - ")}
-                      </p>
-                    ))}
-                  </div>
+                  {level.useInversions && (
+                    <p className="text-xs text-muted-foreground">
+                      {Math.round(level.inversionProbability * 100)}% inversions up to{" "}
+                      {level.maxInversion === 1 ? "1st" : level.maxInversion === 2 ? "2nd" : "3rd"}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

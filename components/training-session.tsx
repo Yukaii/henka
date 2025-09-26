@@ -34,11 +34,9 @@ export function TrainingSession({ mode, difficulty, questionSet, onExit, onSessi
     const newSession = gameManager.createSession(mode, difficulty, questionCount)
 
     if (questionSet) {
-      // Use preset questions
       questionSet.questions.forEach((q) => gameManager.addQuestion(q))
       setCurrentQuestion(questionSet.questions[0])
     } else {
-      // Generate random questions
       const firstQuestion = questionGenerator.generateQuestion(mode, difficulty)
       gameManager.addQuestion(firstQuestion)
       setCurrentQuestion(firstQuestion)
@@ -122,22 +120,21 @@ export function TrainingSession({ mode, difficulty, questionSet, onExit, onSessi
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={onExit} className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onExit} className="flex items-center gap-1">
           <ArrowLeft className="h-4 w-4" />
-          Exit Training
+          <span className="hidden sm:inline">Exit</span>
         </Button>
         <div className="text-sm text-muted-foreground">
           Score: {session.score}/{session.currentQuestion + (showResult ? 1 : 0)}
         </div>
       </div>
 
-      {/* Question Display */}
       <QuestionDisplay
         question={currentQuestion}
         mode={mode}
+        difficulty={difficulty}
         questionNumber={session.currentQuestion + 1}
         totalQuestions={session.totalQuestions}
         onAnswer={handleAnswer}

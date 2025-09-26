@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { AudioControls } from "./audio-controls"
+import { ChordSelector } from "./chord-selector"
 import type { Question, GameMode } from "@/lib/game-modes"
 import { QuestionGenerator } from "@/lib/question-generator"
 import { CheckCircle, XCircle, Lightbulb, Clock } from "lucide-react"
@@ -14,6 +14,7 @@ import { CheckCircle, XCircle, Lightbulb, Clock } from "lucide-react"
 interface QuestionDisplayProps {
   question: Question
   mode: GameMode
+  difficulty: string
   questionNumber: number
   totalQuestions: number
   onAnswer: (answer: string[]) => void
@@ -24,6 +25,7 @@ interface QuestionDisplayProps {
 export function QuestionDisplay({
   question,
   mode,
+  difficulty,
   questionNumber,
   totalQuestions,
   onAnswer,
@@ -78,90 +80,80 @@ export function QuestionDisplay({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Progress Header */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-sm">
-              Question {questionNumber} of {totalQuestions}
-            </Badge>
-            <Badge variant={mode === "absolute" ? "default" : "secondary"}>
-              {mode === "absolute" ? "Absolute Mode" : "Transpose Mode"}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span className="text-sm font-mono">{formatTime(timeSpent)}</span>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <Badge variant="outline">
+            {questionNumber}/{totalQuestions}
+          </Badge>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span className="font-mono text-xs">{formatTime(timeSpent)}</span>
           </div>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={progress} className="h-1" />
       </div>
 
-      {/* Question Card */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Listen to the Chord Progression</span>
-            {mode === "transpose" && (
-              <Badge variant="secondary" className="text-sm">
-                Key: {question.progression.key}
-              </Badge>
-            )}
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span>Listen & Answer</span>
+            <Badge variant={mode === "absolute" ? "default" : "secondary"} className="text-xs">
+              {mode === "absolute" ? "Names" : "Numerals"}
+            </Badge>
           </CardTitle>
+          {mode === "transpose" && (
+            <Badge variant="outline" className="text-xs w-fit">
+              Key: {question.progression.key}
+            </Badge>
+          )}
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* Audio Controls */}
           <AudioControls progression={question.progression} />
 
-          {/* Answer Input */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                Your Answer ({mode === "absolute" ? "Chord Names" : "Roman Numerals"}):
-              </h3>
+              <h4 className="font-medium text-sm">Select {mode === "absolute" ? "chord names" : "Roman numerals"}:</h4>
               <Button variant="ghost" size="sm" onClick={() => setShowHint(!showHint)}>
-                <Lightbulb className="h-4 w-4 mr-2" />
-                {showHint ? "Hide Hint" : "Show Hint"}
+                <Lightbulb className="h-3 w-3" />
               </Button>
             </div>
 
             {showHint && (
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">{questionGenerator.getHint(question, mode)}</p>
+              <div className="bg-muted/50 p-3 rounded text-xs text-muted-foreground">
+                {questionGenerator.getHint(question, mode)}
               </div>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {question.progression.chords.map((_, index) => (
                 <div key={index} className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Chord {index + 1}</label>
-                  <Input
+                  <label className="text-xs text-muted-foreground font-medium">Chord #{index + 1}</label>
+                  <ChordSelector
                     value={userAnswers[index]}
-                    onChange={(e) => handleAnswerChange(index, e.target.value)}
-                    placeholder={mode === "absolute" ? "e.g., Cmaj7" : "e.g., Imaj7"}
+                    onChange={(value) => handleAnswerChange(index, value)}
+                    mode={mode}
+                    difficulty={difficulty}
                     disabled={isAnswered}
-                    className={
-                      showResult && isAnswered
-                        ? question.isCorrect
-                          ? "border-green-500 bg-green-500/10"
-                          : "border-red-500 bg-red-500/10"
-                        : ""
-                    }
+                    placeholder={mode === "absolute" ? "Select chord" : "Select numeral"}
                   />
                   {showResult && isAnswered && (
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-xs">
                       {questionGenerator.validateAnswer(
                         { ...question, correctAnswer: [question.correctAnswer[index]] },
                         [userAnswers[index]],
                         mode,
                       ) ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <div className="flex items-center gap-1 text-green-600">
+                          <CheckCircle className="h-3 w-3" />
+                          <span>Correct</span>
+                        </div>
                       ) : (
-                        <>
-                          <XCircle className="h-4 w-4 text-red-500" />
-                          <span className="text-muted-foreground">Correct: {question.correctAnswer[index]}</span>
-                        </>
+                        <div className="flex items-center gap-1 text-red-600">
+                          <XCircle className="h-3 w-3" />
+                          <span className="text-muted-foreground">Answer: {question.correctAnswer[index]}</span>
+                        </div>
                       )}
                     </div>
                   )}
@@ -170,33 +162,30 @@ export function QuestionDisplay({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between">
-            <div>
-              {showResult && isAnswered && (
-                <div className="flex items-center gap-2">
-                  {question.isCorrect ? (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="h-5 w-5" />
-                      <span className="font-medium">Correct!</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-red-600">
-                      <XCircle className="h-5 w-5" />
-                      <span className="font-medium">Incorrect</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3">
+          <div className="flex items-center justify-between pt-2">
+            {showResult && isAnswered && (
+              <div className="flex items-center gap-2">
+                {question.isCorrect ? (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Correct!</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-red-600">
+                    <XCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Incorrect</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="ml-auto">
               {!isAnswered ? (
-                <Button onClick={handleSubmit} disabled={!isComplete} size="lg">
-                  Submit Answer
+                <Button onClick={handleSubmit} disabled={!isComplete} size="sm">
+                  Submit
                 </Button>
               ) : (
-                <Button onClick={onNext} size="lg">
-                  {questionNumber === totalQuestions ? "Finish" : "Next Question"}
+                <Button onClick={onNext} size="sm">
+                  {questionNumber === totalQuestions ? "Finish" : "Next"}
                 </Button>
               )}
             </div>
