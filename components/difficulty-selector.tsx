@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
-import { Star, TrendingUp, Zap, RotateCcw } from "lucide-react"
+import { Star, TrendingUp, Zap, RotateCcw, Heart } from "lucide-react"
 
 interface DifficultySelectorProps {
   selectedDifficulty: string | null
@@ -11,6 +11,7 @@ interface DifficultySelectorProps {
 }
 
 const DIFFICULTY_ICONS = {
+  easy: Heart,
   beginner: Star,
   intermediate: TrendingUp,
   advanced: Zap,
@@ -69,6 +70,11 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
                     <p className="text-xs text-muted-foreground">
                       {Math.round(level.inversionProbability * 100)}% inversions up to{" "}
                       {level.maxInversion === 1 ? "1st" : level.maxInversion === 2 ? "2nd" : "3rd"}
+                    </p>
+                  )}
+                  {level.allowedKeys && (
+                    <p className="text-xs text-muted-foreground">
+                      Keys: {level.allowedKeys.join(", ")} ({level.allowedKeys.length * level.chordTypes.length} total options)
                     </p>
                   )}
                 </div>

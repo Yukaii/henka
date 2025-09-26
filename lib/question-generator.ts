@@ -211,6 +211,11 @@ export class QuestionGenerator {
     }
 
     const tips = {
+      easy: [
+        "Start with just major and minor chords",
+        "Focus on the bright (major) vs dark (minor) sound",
+        "Only common keys (C, G, F, D) for easier recognition",
+      ],
       beginner: [
         "Focus on distinguishing major from minor chords",
         "Listen to the bass line for root movement",

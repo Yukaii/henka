@@ -287,7 +287,10 @@ export class ProgressTracker {
         case "all-difficulties":
           const difficulties = new Set(data.modeStats.map((s: ModeStats) => s.difficulty))
           shouldUnlock =
-            difficulties.has("beginner") && difficulties.has("intermediate") && difficulties.has("advanced")
+            difficulties.has("easy") && 
+            difficulties.has("beginner") && 
+            difficulties.has("intermediate") && 
+            difficulties.has("advanced")
           break
 
         case "both-modes":
