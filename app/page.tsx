@@ -1,45 +1,40 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { GameModeSelector } from "@/components/game-mode-selector"
 import { DifficultySelector } from "@/components/difficulty-selector"
-import { TrainingSession } from "@/components/training-session"
 import { ProgressDashboard } from "@/components/progress-dashboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SettingsModal } from "@/components/settings-modal"
-import type { GameMode, GameSession } from "@/lib/game-modes"
-import { ProgressTracker } from "@/lib/progress-tracker"
+import type { GameMode } from "@/lib/game-modes"
 import { Music, Settings, BarChart3, ArrowLeft } from "lucide-react"
 
-type AppState = "menu" | "setup" | "training" | "progress"
+type AppView = "menu" | "setup" | "progress"
 
 export default function ChordTrainerApp() {
-  const [appState, setAppState] = useState<AppState>("menu")
+  const router = useRouter()
+  const [currentView, setCurrentView] = useState<AppView>("menu")
   const [selectedMode, setSelectedMode] = useState<GameMode>("transpose")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("beginner")
-  const [progressTracker] = useState(() => new ProgressTracker())
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleStartTraining = () => {
-    setAppState("training")
+    const params = new URLSearchParams({ mode: selectedMode, difficulty: selectedDifficulty })
+    router.push(`/training?${params.toString()}`)
   }
 
   const handleSetup = () => {
-    setAppState("setup")
+    setCurrentView("setup")
   }
 
   const handleBackToMenu = () => {
-    setAppState("menu")
-  }
-
-  const handleSessionComplete = (session: GameSession) => {
-    const newAchievements = progressTracker.recordSession(session)
-    console.log("[v0] Session recorded, new achievements:", newAchievements)
+    setCurrentView("menu")
   }
 
   const renderContent = () => {
-    switch (appState) {
+    switch (currentView) {
       case "menu":
         return (
           <div className="space-y-6">
@@ -85,7 +80,7 @@ export default function ChordTrainerApp() {
             </Card>
 
             <div className="flex gap-3">
-              <Button onClick={() => setAppState("progress")} variant="outline" className="flex-1">
+              <Button onClick={() => setCurrentView("progress")} variant="outline" className="flex-1">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Progress
               </Button>
@@ -111,16 +106,6 @@ export default function ChordTrainerApp() {
               Start Training
             </Button>
           </div>
-        )
-
-      case "training":
-        return (
-          <TrainingSession
-            mode={selectedMode}
-            difficulty={selectedDifficulty}
-            onExit={handleBackToMenu}
-            onSessionComplete={handleSessionComplete}
-          />
         )
 
       case "progress":
