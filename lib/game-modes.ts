@@ -32,13 +32,6 @@ export interface GameModeConfig {
 }
 
 export const GAME_MODES: Record<GameMode, GameModeConfig> = {
-  absolute: {
-    name: "Absolute Mode",
-    description: "Identify chord progressions using absolute chord names",
-    instructions: "Listen to the progression and identify each chord using absolute names like Cmaj7, Dm7, G7, etc.",
-    answerFormat: "Chord names (e.g., Cmaj7, Dm7, G7)",
-    examples: ["Cmaj7 - Am7 - Dm7 - G7", "F - Dm - Bb - C", "Em7 - A7 - Dmaj7 - Gmaj7"],
-  },
   transpose: {
     name: "Transpose Mode",
     description: "Identify chord progressions using Roman numeral analysis",
@@ -46,6 +39,13 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
       "Listen to the root note, then identify the progression using Roman numerals like Imaj7, vi7, ii7, V7.",
     answerFormat: "Roman numerals (e.g., Imaj7, vi7, ii7, V7)",
     examples: ["Imaj7 - vi7 - ii7 - V7", "I - vi - IV - V", "ii7 - V7 - Imaj7 - vi7"],
+  },
+  absolute: {
+    name: "Absolute Mode",
+    description: "Identify chord progressions using absolute chord names",
+    instructions: "Listen to the progression and identify each chord using absolute names like Cmaj7, Dm7, G7, etc.",
+    answerFormat: "Chord names (e.g., Cmaj7, Dm7, G7)",
+    examples: ["Cmaj7 - Am7 - Dm7 - G7", "F - Dm - Bb - C", "Em7 - A7 - Dmaj7 - Gmaj7"],
   },
 }
 

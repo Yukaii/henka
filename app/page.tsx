@@ -16,7 +16,7 @@ type AppState = "menu" | "setup" | "training" | "progress"
 
 export default function ChordTrainerApp() {
   const [appState, setAppState] = useState<AppState>("menu")
-  const [selectedMode, setSelectedMode] = useState<GameMode>("absolute")
+  const [selectedMode, setSelectedMode] = useState<GameMode>("transpose")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("beginner")
   const [progressTracker] = useState(() => new ProgressTracker())
   const [settingsOpen, setSettingsOpen] = useState(false)
