@@ -83,6 +83,24 @@ const instrumentConfigs = {
       release: 0.1,
     },
   },
+  felt_piano: {
+    label: "Soft Piano",
+    description: "Plucky triangle tone with a lingering piano-like decay.",
+    voice: {
+      oscillator: "triangle",
+      gain: 1.1,
+      detune: -4,
+    },
+    bass: {
+      oscillator: "sine",
+      gain: 1.35,
+      detune: 4,
+    },
+    envelope: {
+      attack: 0.008,
+      release: 0.28,
+    },
+  },
 } satisfies Record<string, Omit<InstrumentConfig, "id">>
 
 export type InstrumentId = keyof typeof instrumentConfigs

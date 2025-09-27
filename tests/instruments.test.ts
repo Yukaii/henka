@@ -27,4 +27,10 @@ describe("Instrument definitions", () => {
     assert.ok(config.envelope.attack > 0)
     assert.ok(config.envelope.release > 0)
   })
+
+  it("includes the soft piano preset", () => {
+    const piano = INSTRUMENT_OPTIONS.find((option) => option.id === "felt_piano")
+    assert.ok(piano, "Soft Piano preset missing")
+    assert.equal(piano?.voice.oscillator, "triangle")
+  })
 })

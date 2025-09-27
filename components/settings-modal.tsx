@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useSettings } from "@/components/settings-provider"
+import { useMemo } from "react"
 import { INSTRUMENT_OPTIONS, isInstrumentId } from "@/lib/instruments"
 
 interface SettingsModalProps {
@@ -16,6 +17,11 @@ interface SettingsModalProps {
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { debugMode, setDebugMode, instrument, setInstrument } = useSettings()
+
+  const selectedInstrument = useMemo(
+    () => INSTRUMENT_OPTIONS.find((option) => option.id === instrument),
+    [instrument],
+  )
 
   const handleInstrumentChange = (value: string) => {
     if (isInstrumentId(value)) {
@@ -62,10 +68,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <p className="text-xs text-muted-foreground">Choose the playback timbre for chord practice.</p>
               </div>
               <Select value={instrument} onValueChange={handleInstrumentChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Instrument" />
+                <SelectTrigger className="w-[220px] justify-between text-left">
+                  <SelectValue placeholder="Instrument">{selectedInstrument?.label}</SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="min-w-[260px]">
                   {INSTRUMENT_OPTIONS.map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       <div className="flex flex-col gap-0.5">
