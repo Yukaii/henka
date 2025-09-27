@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { Suspense, useCallback, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { TrainingSession } from "@/components/training-session"
 import { SettingsModal } from "@/components/settings-modal"
@@ -21,6 +21,20 @@ const isValidDifficulty = (value: string | null): value is DifficultyKey =>
   value !== null && Object.prototype.hasOwnProperty.call(DIFFICULTY_LEVELS, value)
 
 export default function TrainingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+          Loading training session...
+        </div>
+      }
+    >
+      <TrainingPageContent />
+    </Suspense>
+  )
+}
+
+function TrainingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [settingsOpen, setSettingsOpen] = useState(false)
