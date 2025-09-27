@@ -7,9 +7,22 @@ import { SettingsProvider } from "@/components/settings-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Henka',
+  description: 'Adaptive training experiences for music creators.',
+  applicationName: 'Henka',
   generator: 'v0.app',
+  manifest: '/manifest.webmanifest',
+  themeColor: '#0b0b0f',
+  icons: {
+    icon: '/icon-192x192.png',
+    apple: '/icon-192x192.png',
+    other: [
+      {
+        rel: 'mask-icon',
+        url: '/icon-maskable.png',
+      },
+    ],
+  },
 }
 
 export default function RootLayout({
