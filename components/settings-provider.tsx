@@ -1,16 +1,20 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { DEFAULT_INSTRUMENT_ID, isInstrumentId, type InstrumentId } from "@/lib/instruments"
 
 type SettingsContextValue = {
   debugMode: boolean
   setDebugMode: (value: boolean) => void
+  instrument: InstrumentId
+  setInstrument: (value: InstrumentId) => void
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [debugMode, setDebugMode] = useState(false)
+  const [instrument, setInstrumentState] = useState<InstrumentId>(DEFAULT_INSTRUMENT_ID)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -25,12 +29,31 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem("henka::debugMode", String(debugMode))
   }, [debugMode])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const stored = window.localStorage.getItem("henka::instrument")
+    if (stored && isInstrumentId(stored)) {
+      setInstrumentState(stored)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("henka::instrument", instrument)
+  }, [instrument])
+
+  const handleSetInstrument = useCallback((value: InstrumentId) => {
+    setInstrumentState(value)
+  }, [])
+
   const value = useMemo(
     () => ({
       debugMode,
       setDebugMode,
+      instrument,
+      setInstrument: handleSetInstrument,
     }),
-    [debugMode],
+    [debugMode, handleSetInstrument, instrument],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

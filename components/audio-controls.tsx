@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, RotateCcw, Volume2 } from "lucide-react"
 import { AudioEngine, type ChordProgression } from "@/lib/audio-engine"
+import { useSettings } from "@/components/settings-provider"
 
 interface AudioControlsProps {
   progression: ChordProgression | null
@@ -14,12 +15,17 @@ interface AudioControlsProps {
 export function AudioControls({ progression, onPlay, onStop }: AudioControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioEngine] = useState(() => new AudioEngine())
+  const { instrument } = useSettings()
 
   useEffect(() => {
     return () => {
       audioEngine.dispose()
     }
   }, [audioEngine])
+
+  useEffect(() => {
+    audioEngine.setInstrument(instrument)
+  }, [audioEngine, instrument])
 
   const handlePlay = async () => {
     if (!progression) return

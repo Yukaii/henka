@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useSettings } from "@/components/settings-provider"
+import { INSTRUMENT_OPTIONS, isInstrumentId } from "@/lib/instruments"
 
 interface SettingsModalProps {
   open: boolean
@@ -14,7 +15,13 @@ interface SettingsModalProps {
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { theme, setTheme, resolvedTheme } = useTheme()
-  const { debugMode, setDebugMode } = useSettings()
+  const { debugMode, setDebugMode, instrument, setInstrument } = useSettings()
+
+  const handleInstrumentChange = (value: string) => {
+    if (isInstrumentId(value)) {
+      setInstrument(value)
+    }
+  }
 
   const handleThemeChange = (value: string) => {
     setTheme(value)
@@ -43,6 +50,30 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <SelectItem value="system">System</SelectItem>
                   <SelectItem value="light">Light</SelectItem>
                   <SelectItem value="dark">Dark</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-4">
+              <div className="max-w-[60%]">
+                <p className="font-medium text-sm">Instrument</p>
+                <p className="text-xs text-muted-foreground">Choose the playback timbre for chord practice.</p>
+              </div>
+              <Select value={instrument} onValueChange={handleInstrumentChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Instrument" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTRUMENT_OPTIONS.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      <div className="flex flex-col gap-0.5">
+                        <span>{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

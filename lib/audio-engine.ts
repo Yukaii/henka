@@ -1,3 +1,5 @@
+import { DEFAULT_INSTRUMENT_ID, getInstrumentConfig, type InstrumentConfig, type InstrumentId } from "./instruments"
+
 // Audio engine for generating and playing chord progressions
 export interface Chord {
   name: string
@@ -11,6 +13,14 @@ export interface ChordProgression {
   chords: Chord[]
   key: string
   tempo: number
+}
+
+type OscillatorOptions = {
+  type?: OscillatorType
+  gain?: number
+  detune?: number
+  attack?: number
+  release?: number
 }
 
 type Voice = {
@@ -29,6 +39,7 @@ export class AudioEngine {
   private playbackTimer: ReturnType<typeof setTimeout> | null = null
   private playbackResolve: (() => void) | null = null
   private iosUnlockAttempted = false
+  private instrumentConfig: InstrumentConfig = getInstrumentConfig(DEFAULT_INSTRUMENT_ID)
 
   constructor() {
     // Audio context is created lazily to satisfy mobile autoplay policies.
@@ -127,11 +138,19 @@ export class AudioEngine {
     return 440 * Math.pow(2, (midiNote - 69) / 12)
   }
 
+  setInstrument(instrumentId: InstrumentId): void {
+    const nextConfig = getInstrumentConfig(instrumentId)
+    if (nextConfig.id === this.instrumentConfig.id) return
+
+    this.instrumentConfig = nextConfig
+    this.stop(true)
+  }
+
   private createOscillator(
     frequency: number,
     startTime: number,
     duration: number,
-    options: { type?: OscillatorType; gain?: number } = {},
+    options: OscillatorOptions = {},
   ): void {
     if (!this.audioContext || !this.masterGain) return
 
@@ -142,10 +161,16 @@ export class AudioEngine {
     oscillator.type = options.type ?? "triangle"
     oscillator.frequency.setValueAtTime(frequency, startTime)
 
+    if (typeof options.detune === "number") {
+      oscillator.detune.setValueAtTime(options.detune, startTime)
+    }
+
     const peakLevel = 0.25 * (options.gain ?? 1)
-    const attackEnd = startTime + 0.02
+    const attackDuration = options.attack ?? 0.02
+    const releaseDuration = options.release ?? 0.12
+    const attackEnd = startTime + attackDuration
     const sustainEnd = Math.max(startTime + duration, attackEnd + 0.1)
-    const releaseEnd = sustainEnd + 0.12
+    const releaseEnd = sustainEnd + releaseDuration
 
     gainNode.gain.setValueAtTime(0.0001, startTime)
     gainNode.gain.linearRampToValueAtTime(peakLevel, attackEnd)
@@ -170,19 +195,30 @@ export class AudioEngine {
   private scheduleChord(chord: Chord, startTime: number, duration: number): void {
     const seenNotes = new Set<number>()
 
+    const { voice, bass, envelope } = this.instrumentConfig
+
     chord.notes.forEach((midiNote) => {
       if (!Number.isFinite(midiNote)) return
       seenNotes.add(midiNote)
       const frequency = this.midiToFrequency(midiNote)
-      this.createOscillator(frequency, startTime, duration)
+      this.createOscillator(frequency, startTime, duration, {
+        type: voice.oscillator,
+        gain: voice.gain,
+        detune: voice.detune,
+        attack: envelope.attack,
+        release: envelope.release,
+      })
     })
 
     if (typeof chord.rootMidi === "number") {
       const bassMidi = chord.rootMidi - 12 >= 24 ? chord.rootMidi - 12 : chord.rootMidi
       if (!seenNotes.has(bassMidi)) {
         this.createOscillator(this.midiToFrequency(bassMidi), startTime, duration, {
-          type: "sine",
-          gain: 1.2,
+          type: bass.oscillator,
+          gain: bass.gain,
+          detune: bass.detune,
+          attack: envelope.attack,
+          release: envelope.release,
         })
       }
     }
