@@ -33,4 +33,12 @@ describe("Instrument definitions", () => {
     assert.ok(piano, "Soft Piano preset missing")
     assert.equal(piano?.voice.oscillator, "triangle")
   })
+
+  it("registers the sampled grand instrument with audio assets", () => {
+    const sampled = INSTRUMENT_OPTIONS.find((option) => option.id === "sampled_grand")
+    assert.ok(sampled, "Sampled Grand preset missing")
+    assert.equal(sampled?.playback, "sample")
+    assert.ok(sampled?.sample)
+    assert.ok(sampled?.sample?.files.length)
+  })
 })
