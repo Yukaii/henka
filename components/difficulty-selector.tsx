@@ -54,6 +54,7 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground leading-relaxed">{level.description}</p>
                   <div className="flex flex-wrap gap-1">
                     {level.chordTypes.slice(0, 4).map((type) => (
                       <Badge key={type} variant="secondary" className="text-xs">

@@ -1,15 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { GameModeSelector } from "@/components/game-mode-selector"
 import { DifficultySelector } from "@/components/difficulty-selector"
 import { ProgressDashboard } from "@/components/progress-dashboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SettingsModal } from "@/components/settings-modal"
-import type { GameMode } from "@/lib/game-modes"
-import { Music, Settings, BarChart3, ArrowLeft } from "lucide-react"
+import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
+import { type GameMode, GAME_MODES } from "@/lib/game-modes"
+import { WELCOME_SEEN_KEY } from "@/lib/storage-keys"
+import { Settings, BarChart3, ArrowLeft } from "lucide-react"
 
 type AppView = "menu" | "setup" | "progress"
 
@@ -19,6 +23,17 @@ export default function ChordTrainerApp() {
   const [selectedMode, setSelectedMode] = useState<GameMode>("transpose")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("beginner")
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const hasSeenWelcome = window.localStorage.getItem(WELCOME_SEEN_KEY)
+    if (!hasSeenWelcome) {
+      router.replace("/welcome")
+      return
+    }
+    setIsReady(true)
+  }, [router])
 
   const handleStartTraining = () => {
     const params = new URLSearchParams({ mode: selectedMode, difficulty: selectedDifficulty })
@@ -35,45 +50,98 @@ export default function ChordTrainerApp() {
 
   const renderContent = () => {
     switch (currentView) {
-      case "menu":
+      case "menu": {
+        const modeConfig = GAME_MODES[selectedMode]
+        const difficultyConfig = DIFFICULTY_LEVELS[selectedDifficulty] ?? DIFFICULTY_LEVELS.beginner
+        const inversionSummary = difficultyConfig.useInversions
+          ? `Inversions up to ${
+              difficultyConfig.maxInversion === 1
+                ? "1st"
+                : difficultyConfig.maxInversion === 2
+                  ? "2nd"
+                  : "3rd"
+            }`
+          : "Root position only"
+
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Music className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-balance">Chord Ear Trainer</h1>
-              <p className="text-muted-foreground text-pretty max-w-md mx-auto">
-                Train your ear to recognize chord progressions
-              </p>
-            </div>
-
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Settings className="h-5 w-5" />
-                  Quick Start
+                  Quick Setup
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Mode</p>
-                    <p className="font-medium">{selectedMode === "absolute" ? "Chord Names" : "Roman Numerals"}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Difficulty</p>
-                    <p className="font-medium capitalize">{selectedDifficulty}</p>
+              <CardContent className="space-y-5">
+                <div className="space-y-3">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">Mode</div>
+                  <Select value={selectedMode} onValueChange={(value) => setSelectedMode(value as GameMode)}>
+                    <SelectTrigger className="w-full justify-between">
+                      <SelectValue aria-label={modeConfig.name}>{modeConfig.name}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(GAME_MODES).map(([mode, config]) => (
+                        <SelectItem key={mode} value={mode}>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-foreground">{config.name}</span>
+                            <span className="text-xs text-muted-foreground">{config.answerFormat}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-sm">
+                    <p className="font-semibold text-foreground">{modeConfig.name}</p>
+                    <p className="text-muted-foreground leading-relaxed">{modeConfig.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium">Answer format:</span> {modeConfig.answerFormat}
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground/90">Example: {modeConfig.examples[0]}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleStartTraining} className="flex-1">
+
+                <div className="space-y-3">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">Difficulty</div>
+                  <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+                    <SelectTrigger className="w-full justify-between capitalize">
+                      <SelectValue aria-label={difficultyConfig.name}>{difficultyConfig.name}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(DIFFICULTY_LEVELS).map(([key, level]) => (
+                        <SelectItem key={key} value={key} className="capitalize">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-foreground">{level.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {level.chordTypes.length} chord types · {level.progressionLength}-chord phrases
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-sm">
+                    <p className="font-semibold text-foreground">{difficultyConfig.name}</p>
+                    <p className="text-muted-foreground leading-relaxed">{difficultyConfig.description}</p>
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span>{difficultyConfig.chordTypes.length} chord families</span>
+                      <span>{difficultyConfig.progressionLength}-chord phrases</span>
+                      <span>{inversionSummary}</span>
+                      <span>
+                        {difficultyConfig.allowedKeys
+                          ? `Keys: ${difficultyConfig.allowedKeys.join(", ")}`
+                          : "All keys"
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={handleStartTraining} className="flex-1" size="lg">
                     Start Training
                   </Button>
-                  <Button onClick={handleSetup} variant="outline">
-                    Setup
+                  <Button onClick={handleSetup} variant="outline" className="flex-1" size="lg">
+                    Full Setup
                   </Button>
                 </div>
               </CardContent>
@@ -87,6 +155,7 @@ export default function ChordTrainerApp() {
             </div>
           </div>
         )
+      }
 
       case "setup":
         return (
@@ -116,10 +185,17 @@ export default function ChordTrainerApp() {
     }
   }
 
+  if (!isReady) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-md space-y-4">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/welcome">Welcome</Link>
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
             <Settings className="h-5 w-5" />
           </Button>

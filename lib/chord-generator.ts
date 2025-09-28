@@ -32,6 +32,7 @@ export const ROMAN_NUMERALS = {
 
 export interface DifficultyLevel {
   name: string
+  description: string
   chordTypes: string[]
   progressionLength: number
   commonProgressions: string[][]
@@ -49,6 +50,7 @@ export interface ProgressionGenerationOptions {
 export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
   easy: {
     name: "Easy",
+    description: "Foundational major/minor triads in the friendliest keys with no inversions.",
     chordTypes: ["major", "minor"],
     progressionLength: 4,
     commonProgressions: [
@@ -63,6 +65,7 @@ export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
   },
   beginner: {
     name: "Beginner",
+    description: "Adds basic inversions and ii–V–I motion while staying in comfortable keys.",
     chordTypes: ["major", "minor"],
     progressionLength: 4,
     commonProgressions: [
@@ -78,6 +81,7 @@ export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
   },
   intermediate: {
     name: "Intermediate",
+    description: "Introduces seventh chords and light voice-leading with occasional inversions.",
     chordTypes: ["major", "minor", "major7", "minor7", "dominant7"],
     progressionLength: 4,
     commonProgressions: [
@@ -93,6 +97,8 @@ export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
   },
   advanced: {
     name: "Advanced",
+    description:
+      "Extended harmony across six-chord phrases with frequent inversions and richer tensions.",
     chordTypes: [
       "major",
       "minor",
