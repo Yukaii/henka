@@ -4,8 +4,6 @@ import { Suspense, useCallback, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { TrainingSession } from "@/components/training-session"
 import { SettingsModal } from "@/components/settings-modal"
-import { Button } from "@/components/ui/button"
-import { Settings } from "lucide-react"
 import { ProgressTracker } from "@/lib/progress-tracker"
 import type { GameMode, GameSession } from "@/lib/game-modes"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
@@ -60,14 +58,14 @@ function TrainingPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-md space-y-4">
-        <div className="flex justify-end">
-          <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
-
-        <TrainingSession mode={mode} difficulty={difficulty} onExit={handleExit} onSessionComplete={handleSessionComplete} />
+      <div className="container mx-auto max-w-md space-y-4 px-4 py-6">
+        <TrainingSession
+          mode={mode}
+          difficulty={difficulty}
+          onExit={handleExit}
+          onSessionComplete={handleSessionComplete}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
       </div>
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>

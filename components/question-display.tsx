@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { AudioControls } from "./audio-controls"
 import { ChordSelector } from "./chord-selector"
 import type { Question, GameMode } from "@/lib/game-modes"
@@ -73,8 +72,6 @@ export function QuestionDisplay({
   }
 
   const isComplete = userAnswers.every((answer) => answer.trim() !== "")
-  const progress = (questionNumber / totalQuestions) * 100
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -89,8 +86,12 @@ export function QuestionDisplay({
     return `${pc}${octave}`
   }
 
+  const actionLabel = !isAnswered ? "Submit" : questionNumber === totalQuestions ? "Finish" : "Next"
+  const actionDisabled = !isAnswered ? !isComplete : false
+  const actionHandler = !isAnswered ? handleSubmit : onNext
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28">
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <Badge variant="outline">
@@ -101,7 +102,6 @@ export function QuestionDisplay({
             <span className="font-mono text-xs">{formatTime(timeSpent)}</span>
           </div>
         </div>
-        <Progress value={progress} className="h-1" />
       </div>
 
       <Card>
@@ -120,7 +120,9 @@ export function QuestionDisplay({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Audio Controls */}
-          <AudioControls progression={question.progression} />
+          <div className="sticky top-[4.5rem] z-20 -mx-6 -mt-4 bg-card/95 px-6 py-4 shadow-sm ring-1 ring-border/60 backdrop-blur supports-[backdrop-filter]:bg-card/80 sm:rounded-xl">
+            <AudioControls progression={question.progression} />
+          </div>
 
           {debugMode && (
             <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 p-3 text-xs">
@@ -200,36 +202,36 @@ export function QuestionDisplay({
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            {showResult && isAnswered && (
-              <div className="flex items-center gap-2">
-                {question.isCorrect ? (
-                  <div className="flex items-center gap-1 text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Correct!</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-red-600">
-                    <XCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Incorrect</span>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="ml-auto">
-              {!isAnswered ? (
-                <Button onClick={handleSubmit} disabled={!isComplete} size="sm">
-                  Submit
-                </Button>
+          {showResult && isAnswered && (
+            <div className="flex items-center gap-2 rounded-md bg-muted/40 px-3 py-2 text-sm">
+              {question.isCorrect ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium">Correct!</span>
+                </div>
               ) : (
-                <Button onClick={onNext} size="sm">
-                  {questionNumber === totalQuestions ? "Finish" : "Next"}
-                </Button>
+                <div className="flex items-center gap-1 text-red-600">
+                  <XCircle className="h-4 w-4" />
+                  <span className="font-medium">Incorrect</span>
+                </div>
               )}
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+        <div className="w-full max-w-md">
+          <Button
+            onClick={actionHandler}
+            disabled={actionDisabled}
+            size="lg"
+            className="pointer-events-auto w-full"
+          >
+            {actionLabel}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

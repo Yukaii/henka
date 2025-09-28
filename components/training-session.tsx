@@ -7,7 +7,8 @@ import { GameModeManager, type GameSession, type Question, type GameMode } from 
 import { QuestionGenerator, type QuestionSet } from "@/lib/question-generator"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { ArrowLeft, Settings } from "lucide-react"
 
 interface TrainingSessionProps {
   mode: GameMode
@@ -15,9 +16,17 @@ interface TrainingSessionProps {
   questionSet?: QuestionSet
   onExit: () => void
   onSessionComplete?: (session: GameSession) => void
+  onOpenSettings?: () => void
 }
 
-export function TrainingSession({ mode, difficulty, questionSet, onExit, onSessionComplete }: TrainingSessionProps) {
+export function TrainingSession({
+  mode,
+  difficulty,
+  questionSet,
+  onExit,
+  onSessionComplete,
+  onOpenSettings,
+}: TrainingSessionProps) {
   const [gameManager] = useState(() => new GameModeManager())
   const [questionGenerator] = useState(() => new QuestionGenerator())
   const [session, setSession] = useState<GameSession | null>(null)
@@ -119,15 +128,38 @@ export function TrainingSession({ mode, difficulty, questionSet, onExit, onSessi
     )
   }
 
+  const answeredCount = session.currentQuestion + (showResult ? 1 : 0)
+  const progressValue = session.totalQuestions > 0 ? (answeredCount / session.totalQuestions) * 100 : 0
+  const currentQuestionNumber = Math.min(session.currentQuestion + 1, session.totalQuestions)
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={onExit} className="flex items-center gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Exit</span>
-        </Button>
-        <div className="text-sm text-muted-foreground">
-          Score: {session.score}/{session.currentQuestion + (showResult ? 1 : 0)}
+      <div className="sticky top-0 z-30 -mx-4 border-b border-border/60 bg-background/95 px-4 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:mx-0 sm:rounded-2xl sm:border">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onExit} className="flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Exit</span>
+          </Button>
+
+          <div className="flex-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                Question {currentQuestionNumber} / {session.totalQuestions}
+              </span>
+              <span>Score {session.score}</span>
+            </div>
+            <Progress value={progressValue} className="mt-2 h-2 w-full rounded-full" />
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenSettings}
+            aria-label="Open settings"
+            disabled={!onOpenSettings}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

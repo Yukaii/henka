@@ -50,7 +50,7 @@ export function AudioControls({ progression, onPlay, onStop }: AudioControlsProp
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
       <Button
         onClick={isPlaying ? handleStop : handlePlay}
         disabled={!progression}
