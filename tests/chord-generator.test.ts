@@ -49,4 +49,23 @@ describe("ChordGenerator Roman numeral mapping", () => {
     assert.strictEqual(subdominant.rootMidi - tonic.rootMidi, 5)
     assert.strictEqual(subdominant.romanNumeral, "IV/1st")
   })
+
+  it("applies voice leading to beginner progressions", () => {
+    const generator = new ChordGenerator()
+    const progression = generator.generateProgressionFromRoman(["I", "V", "vi", "IV"], "C", "beginner")
+
+    const noteExpectations = [
+      [60, 64, 67],
+      [59, 62, 67],
+      [60, 64, 69],
+      [60, 65, 69],
+    ]
+
+    const inversions = [0, 1, 1, 2]
+
+    progression.chords.forEach((chord, index) => {
+      assert.deepStrictEqual(chord.notes, noteExpectations[index])
+      assert.strictEqual(chord.inversion ?? 0, inversions[index])
+    })
+  })
 })

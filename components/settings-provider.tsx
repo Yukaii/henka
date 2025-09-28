@@ -8,6 +8,8 @@ type SettingsContextValue = {
   setDebugMode: (value: boolean) => void
   instrument: InstrumentId
   setInstrument: (value: InstrumentId) => void
+  voiceLeading: boolean
+  setVoiceLeading: (value: boolean) => void
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
@@ -15,6 +17,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null)
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [debugMode, setDebugMode] = useState(false)
   const [instrument, setInstrumentState] = useState<InstrumentId>(DEFAULT_INSTRUMENT_ID)
+  const [voiceLeading, setVoiceLeading] = useState(true)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -26,8 +29,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return
+    const stored = window.localStorage.getItem("henka::voiceLeading")
+    if (stored !== null) {
+      setVoiceLeading(stored !== "false")
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
     window.localStorage.setItem("henka::debugMode", String(debugMode))
   }, [debugMode])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("henka::voiceLeading", String(voiceLeading))
+  }, [voiceLeading])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -52,8 +68,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setDebugMode,
       instrument,
       setInstrument: handleSetInstrument,
+      voiceLeading,
+      setVoiceLeading,
     }),
-    [debugMode, handleSetInstrument, instrument],
+    [debugMode, handleSetInstrument, instrument, voiceLeading],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

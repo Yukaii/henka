@@ -16,7 +16,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { theme, setTheme, resolvedTheme } = useTheme()
-  const { debugMode, setDebugMode, instrument, setInstrument } = useSettings()
+  const { debugMode, setDebugMode, instrument, setInstrument, voiceLeading, setVoiceLeading } = useSettings()
 
   const selectedInstrument = useMemo(
     () => INSTRUMENT_OPTIONS.find((option) => option.id === instrument),
@@ -83,6 +83,20 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-medium text-sm">Voice Leading</p>
+              <p className="text-xs text-muted-foreground">
+                Smooth out chord transitions with automatic inversions.
+              </p>
+            </div>
+            <Switch
+              checked={voiceLeading}
+              onCheckedChange={setVoiceLeading}
+              aria-label="Toggle voice leading"
+            />
           </div>
 
           <div className="flex items-center justify-between gap-4">

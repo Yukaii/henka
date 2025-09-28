@@ -1,4 +1,8 @@
-import { ChordGenerator, DIFFICULTY_LEVELS } from "./chord-generator"
+import {
+  ChordGenerator,
+  DIFFICULTY_LEVELS,
+  type ProgressionGenerationOptions,
+} from "./chord-generator"
 import type { Question, GameMode } from "./game-modes"
 import type { ChordProgression } from "./audio-engine"
 
@@ -76,8 +80,13 @@ export class QuestionGenerator {
     this.chordGenerator = new ChordGenerator()
   }
 
-  generateQuestion(mode: GameMode, difficulty: string, questionId?: string): Question {
-    const progression = this.chordGenerator.generateRandomProgression(difficulty)
+  generateQuestion(
+    mode: GameMode,
+    difficulty: string,
+    questionId?: string,
+    options?: ProgressionGenerationOptions,
+  ): Question {
+    const progression = this.chordGenerator.generateRandomProgression(difficulty, undefined, options)
     const correctAnswer = this.generateCorrectAnswer(progression, mode)
 
     return {
@@ -93,11 +102,12 @@ export class QuestionGenerator {
     count: number,
     name?: string,
     description?: string,
+    options?: ProgressionGenerationOptions,
   ): QuestionSet {
     const questions: Question[] = []
 
     for (let i = 0; i < count; i++) {
-      questions.push(this.generateQuestion(mode, difficulty))
+      questions.push(this.generateQuestion(mode, difficulty, undefined, options))
     }
 
     return {

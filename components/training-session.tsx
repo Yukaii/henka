@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, Settings } from "lucide-react"
+import { useSettings } from "@/components/settings-provider"
 
 interface TrainingSessionProps {
   mode: GameMode
@@ -33,6 +34,7 @@ export function TrainingSession({
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
+  const { voiceLeading } = useSettings()
 
   const initializeSession = useCallback(() => {
     const questionCount = questionSet?.questions.length || 10
@@ -42,13 +44,15 @@ export function TrainingSession({
       questionSet.questions.forEach((q) => gameManager.addQuestion(q))
       setCurrentQuestion(questionSet.questions[0])
     } else {
-      const firstQuestion = questionGenerator.generateQuestion(mode, difficulty)
+      const firstQuestion = questionGenerator.generateQuestion(mode, difficulty, undefined, {
+        voiceLeading,
+      })
       gameManager.addQuestion(firstQuestion)
       setCurrentQuestion(firstQuestion)
     }
 
     setSession(newSession)
-  }, [difficulty, gameManager, mode, questionGenerator, questionSet])
+  }, [difficulty, gameManager, mode, questionGenerator, questionSet, voiceLeading])
 
   useEffect(() => {
     initializeSession()
@@ -92,7 +96,9 @@ export function TrainingSession({
     if (questionSet && questionSet.questions[nextQuestionIndex]) {
       nextQuestion = questionSet.questions[nextQuestionIndex]
     } else {
-      nextQuestion = questionGenerator.generateQuestion(mode, difficulty)
+      nextQuestion = questionGenerator.generateQuestion(mode, difficulty, undefined, {
+        voiceLeading,
+      })
       gameManager.addQuestion(nextQuestion)
     }
 
