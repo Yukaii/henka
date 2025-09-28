@@ -10,6 +10,7 @@ import type { Question, GameMode } from "@/lib/game-modes"
 import { QuestionGenerator } from "@/lib/question-generator"
 import { useSettings } from "@/components/settings-provider"
 import { CheckCircle, XCircle, Lightbulb, Clock } from "lucide-react"
+import { useTranslations } from "@/hooks/use-translations"
 
 interface QuestionDisplayProps {
   question: Question
@@ -38,6 +39,7 @@ export function QuestionDisplay({
   const [isAnswered, setIsAnswered] = useState(false)
   const questionGenerator = new QuestionGenerator()
   const { debugMode } = useSettings()
+  const t = useTranslations()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -86,7 +88,11 @@ export function QuestionDisplay({
     return `${pc}${octave}`
   }
 
-  const actionLabel = !isAnswered ? "Submit" : questionNumber === totalQuestions ? "Finish" : "Next"
+  const actionLabel = !isAnswered
+    ? t.question.submit
+    : questionNumber === totalQuestions
+      ? t.question.finish
+      : t.question.next
   const actionDisabled = !isAnswered ? !isComplete : false
   const actionHandler = !isAnswered ? handleSubmit : onNext
 
@@ -107,14 +113,14 @@ export function QuestionDisplay({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
-            <span>Listen & Answer</span>
+            <span>{t.question.listenAndAnswer}</span>
             <Badge variant={mode === "absolute" ? "default" : "secondary"} className="text-xs">
-              {mode === "absolute" ? "Names" : "Numerals"}
+              {mode === "absolute" ? t.question.badgeNames : t.question.badgeNumerals}
             </Badge>
           </CardTitle>
           {mode === "transpose" && (
             <Badge variant="outline" className="text-xs w-fit">
-              Key: {question.progression.key}
+              {t.question.keyLabel}: {question.progression.key}
             </Badge>
           )}
         </CardHeader>
@@ -127,8 +133,10 @@ export function QuestionDisplay({
           {debugMode && (
             <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 p-3 text-xs">
               <div className="flex items-center justify-between">
-                <p className="font-semibold">Debug Info</p>
-                <span className="text-muted-foreground">Key: {question.progression.key}</span>
+                <p className="font-semibold">{t.question.debugTitle}</p>
+                <span className="text-muted-foreground">
+                  {t.question.keyLabel}: {question.progression.key}
+                </span>
               </div>
               <div className="mt-2 space-y-3">
                 {question.progression.chords.map((chord, index) => {
@@ -137,14 +145,18 @@ export function QuestionDisplay({
                   return (
                     <div key={index} className="space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium">Chord #{index + 1}</p>
-                        <span className="text-muted-foreground">Answer: {answer || "?"}</span>
+                        <p className="font-medium">{`${t.question.chordLabel} #${index + 1}`}</p>
+                        <span className="text-muted-foreground">
+                          {t.question.debugAnswerLabel}: {answer || "?"}
+                        </span>
                       </div>
                       <p className="text-muted-foreground">
                         {chord.name}
                         {chord.romanNumeral ? ` (${chord.romanNumeral})` : ""}
                       </p>
-                      <p className="font-mono text-muted-foreground">Notes: {noteNames}</p>
+                      <p className="font-mono text-muted-foreground">
+                        {t.question.debugNotesLabel}: {noteNames}
+                      </p>
                     </div>
                   )
                 })}
@@ -154,7 +166,9 @@ export function QuestionDisplay({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-sm">Select {mode === "absolute" ? "chord names" : "Roman numerals"}:</h4>
+              <h4 className="font-medium text-sm">
+                {mode === "absolute" ? t.question.selectPromptAbsolute : t.question.selectPromptRoman}
+              </h4>
               <Button variant="ghost" size="sm" onClick={() => setShowHint(!showHint)}>
                 <Lightbulb className="h-3 w-3" />
               </Button>
@@ -169,14 +183,16 @@ export function QuestionDisplay({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {question.progression.chords.map((_, index) => (
                 <div key={index} className="space-y-2">
-                  <label className="text-xs text-muted-foreground font-medium">Chord #{index + 1}</label>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    {`${t.question.chordLabel} #${index + 1}`}
+                  </label>
                   <ChordSelector
                     value={userAnswers[index]}
                     onChange={(value) => handleAnswerChange(index, value)}
                     mode={mode}
                     difficulty={difficulty}
                     disabled={isAnswered}
-                    placeholder={mode === "absolute" ? "Select chord" : "Select numeral"}
+                    placeholder={mode === "absolute" ? t.question.placeholderAbsolute : t.question.placeholderRoman}
                   />
                   {showResult && isAnswered && (
                     <div className="flex items-center gap-1 text-xs">
@@ -187,12 +203,14 @@ export function QuestionDisplay({
                       ) ? (
                         <div className="flex items-center gap-1 text-green-600">
                           <CheckCircle className="h-3 w-3" />
-                          <span>Correct</span>
+                          <span>{t.question.correct}</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 text-red-600">
                           <XCircle className="h-3 w-3" />
-                          <span className="text-muted-foreground">Answer: {question.correctAnswer[index]}</span>
+                          <span className="text-muted-foreground">
+                            {t.question.debugAnswerLabel}: {question.correctAnswer[index]}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -207,12 +225,12 @@ export function QuestionDisplay({
               {question.isCorrect ? (
                 <div className="flex items-center gap-1 text-green-600">
                   <CheckCircle className="h-4 w-4" />
-                  <span className="font-medium">Correct!</span>
+                  <span className="font-medium">{t.question.correctEmphasis}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1 text-red-600">
                   <XCircle className="h-4 w-4" />
-                  <span className="font-medium">Incorrect</span>
+                  <span className="font-medium">{t.question.incorrect}</span>
                 </div>
               )}
             </div>

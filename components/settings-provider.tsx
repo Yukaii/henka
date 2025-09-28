@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { DEFAULT_INSTRUMENT_ID, isInstrumentId, type InstrumentId } from "@/lib/instruments"
+import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguage } from "@/lib/i18n"
 
 type SettingsContextValue = {
   debugMode: boolean
@@ -10,6 +11,8 @@ type SettingsContextValue = {
   setInstrument: (value: InstrumentId) => void
   voiceLeading: boolean
   setVoiceLeading: (value: boolean) => void
+  language: SupportedLanguage
+  setLanguage: (value: SupportedLanguage) => void
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
@@ -18,6 +21,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [debugMode, setDebugMode] = useState(false)
   const [instrument, setInstrumentState] = useState<InstrumentId>(DEFAULT_INSTRUMENT_ID)
   const [voiceLeading, setVoiceLeading] = useState(true)
+  const [language, setLanguageState] = useState<SupportedLanguage>(DEFAULT_LANGUAGE)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -58,8 +62,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem("henka::instrument", instrument)
   }, [instrument])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const stored = window.localStorage.getItem("henka::language")
+    if (stored && isSupportedLanguage(stored)) {
+      setLanguageState(stored)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("henka::language", language)
+    document.documentElement.lang = language
+  }, [language])
+
   const handleSetInstrument = useCallback((value: InstrumentId) => {
     setInstrumentState(value)
+  }, [])
+
+  const handleSetLanguage = useCallback((value: SupportedLanguage) => {
+    setLanguageState(value)
   }, [])
 
   const value = useMemo(
@@ -70,8 +92,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setInstrument: handleSetInstrument,
       voiceLeading,
       setVoiceLeading,
+      language,
+      setLanguage: handleSetLanguage,
     }),
-    [debugMode, handleSetInstrument, instrument, voiceLeading],
+    [debugMode, handleSetInstrument, handleSetLanguage, instrument, language, voiceLeading],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

@@ -4,6 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
 import { Star, TrendingUp, Zap, RotateCcw, Heart } from "lucide-react"
+import { useTranslations } from "@/hooks/use-translations"
+import { useSettings } from "@/components/settings-provider"
+import {
+  formatChordTypeBadge,
+  formatExtraChordTypes,
+  formatInversionProbability,
+  formatKeysWithOptions,
+} from "@/lib/i18n"
 
 interface DifficultySelectorProps {
   selectedDifficulty: string | null
@@ -18,13 +26,19 @@ const DIFFICULTY_ICONS = {
 }
 
 export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: DifficultySelectorProps) {
+  const t = useTranslations()
+  const { language } = useSettings()
+
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold">Difficulty Level</h3>
+      <h3 className="font-semibold">{t.home.difficultyHeading}</h3>
 
       <div className="space-y-3">
         {Object.entries(DIFFICULTY_LEVELS).map(([key, level]) => {
           const Icon = DIFFICULTY_ICONS[key as keyof typeof DIFFICULTY_ICONS]
+          const messages = t.difficulties?.[key]
+          const displayName = messages?.name ?? level.name
+          const description = messages?.description ?? level.description
 
           return (
             <Card
@@ -38,11 +52,11 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
                 <CardTitle className="text-base flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4 text-primary" />
-                    {level.name}
+                    {displayName}
                   </div>
                   <div className="flex gap-1">
                     <Badge variant="outline" className="text-xs">
-                      {level.chordTypes.length} types
+                      {formatChordTypeBadge(language, level.chordTypes.length)}
                     </Badge>
                     {level.useInversions && (
                       <Badge variant="outline" className="text-xs">
@@ -54,7 +68,7 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground leading-relaxed">{level.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
                   <div className="flex flex-wrap gap-1">
                     {level.chordTypes.slice(0, 4).map((type) => (
                       <Badge key={type} variant="secondary" className="text-xs">
@@ -63,19 +77,22 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
                     ))}
                     {level.chordTypes.length > 4 && (
                       <Badge variant="secondary" className="text-xs">
-                        +{level.chordTypes.length - 4} more
+                        {formatExtraChordTypes(language, level.chordTypes.length - 4)}
                       </Badge>
                     )}
                   </div>
                   {level.useInversions && (
                     <p className="text-xs text-muted-foreground">
-                      {Math.round(level.inversionProbability * 100)}% inversions up to{" "}
-                      {level.maxInversion === 1 ? "1st" : level.maxInversion === 2 ? "2nd" : "3rd"}
+                      {formatInversionProbability(language, level.inversionProbability, level.maxInversion)}
                     </p>
                   )}
                   {level.allowedKeys && (
                     <p className="text-xs text-muted-foreground">
-                      Keys: {level.allowedKeys.join(", ")} ({level.allowedKeys.length * level.chordTypes.length} total options)
+                      {formatKeysWithOptions(
+                        language,
+                        level.allowedKeys,
+                        level.allowedKeys.length * level.chordTypes.length,
+                      )}
                     </p>
                   )}
                 </div>

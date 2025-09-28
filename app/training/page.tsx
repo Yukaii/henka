@@ -7,6 +7,7 @@ import { SettingsModal } from "@/components/settings-modal"
 import { ProgressTracker } from "@/lib/progress-tracker"
 import type { GameMode, GameSession } from "@/lib/game-modes"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
+import { useTranslations } from "@/hooks/use-translations"
 
 type DifficultyKey = keyof typeof DIFFICULTY_LEVELS
 
@@ -18,14 +19,19 @@ const isValidMode = (value: string | null): value is GameMode => value === "abso
 const isValidDifficulty = (value: string | null): value is DifficultyKey =>
   value !== null && Object.prototype.hasOwnProperty.call(DIFFICULTY_LEVELS, value)
 
+function TrainingFallback() {
+  const t = useTranslations()
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+      {t.common.loadingSession}
+    </div>
+  )
+}
+
 export default function TrainingPage() {
   return (
     <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
-          Loading training session...
-        </div>
-      }
+      fallback={<TrainingFallback />}
     >
       <TrainingPageContent />
     </Suspense>

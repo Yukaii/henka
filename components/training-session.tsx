@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, Settings } from "lucide-react"
 import { useSettings } from "@/components/settings-provider"
+import { useTranslations } from "@/hooks/use-translations"
 
 interface TrainingSessionProps {
   mode: GameMode
@@ -35,6 +36,7 @@ export function TrainingSession({
   const [showResult, setShowResult] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const { voiceLeading } = useSettings()
+  const t = useTranslations()
 
   const initializeSession = useCallback(() => {
     const questionCount = questionSet?.questions.length || 10
@@ -115,7 +117,7 @@ export function TrainingSession({
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <p>Loading training session...</p>
+          <p>{t.common.loadingSession}</p>
         </CardContent>
       </Card>
     )
@@ -144,15 +146,17 @@ export function TrainingSession({
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onExit} className="flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Exit</span>
+            <span className="hidden sm:inline">{t.trainingSession.exit}</span>
           </Button>
 
           <div className="flex-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                Question {currentQuestionNumber} / {session.totalQuestions}
+                {t.trainingSession.questionLabel} {currentQuestionNumber} / {session.totalQuestions}
               </span>
-              <span>Score {session.score}</span>
+              <span>
+                {t.trainingSession.score} {session.score}
+              </span>
             </div>
             <Progress value={progressValue} className="mt-2 h-2 w-full rounded-full" />
           </div>
@@ -161,7 +165,7 @@ export function TrainingSession({
             variant="ghost"
             size="icon"
             onClick={onOpenSettings}
-            aria-label="Open settings"
+            aria-label={t.trainingSession.openSettingsAria}
             disabled={!onOpenSettings}
           >
             <Settings className="h-4 w-4" />

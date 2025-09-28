@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Play, Pause, RotateCcw, Volume2 } from "lucide-react"
 import { AudioEngine, type ChordProgression } from "@/lib/audio-engine"
 import { useSettings } from "@/components/settings-provider"
+import { useTranslations } from "@/hooks/use-translations"
 
 interface AudioControlsProps {
   progression: ChordProgression | null
@@ -16,6 +17,7 @@ export function AudioControls({ progression, onPlay, onStop }: AudioControlsProp
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioEngine] = useState(() => new AudioEngine())
   const { instrument } = useSettings()
+  const t = useTranslations()
 
   useEffect(() => {
     return () => {
@@ -58,17 +60,19 @@ export function AudioControls({ progression, onPlay, onStop }: AudioControlsProp
         className="bg-primary hover:bg-primary/90"
       >
         {isPlaying ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
-        {isPlaying ? "Stop" : "Play"}
+        {isPlaying ? t.audio.stop : t.audio.play}
       </Button>
 
       <Button onClick={handlePlay} disabled={!progression || isPlaying} variant="outline" size="lg">
         <RotateCcw className="h-4 w-4 mr-2" />
-        Replay
+        {t.audio.replay}
       </Button>
 
       <div className="flex items-center gap-2 text-muted-foreground">
         <Volume2 className="h-4 w-4" />
-        <span className="text-sm">{progression ? `${progression.chords.length} chords` : "No progression"}</span>
+        <span className="text-sm">
+          {progression ? t.audio.chordCount(progression.chords.length) : t.audio.noProgression}
+        </span>
       </div>
     </div>
   )

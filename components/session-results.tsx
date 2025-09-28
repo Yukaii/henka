@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import type { GameSession, GameMode } from "@/lib/game-modes"
+import { GAME_MODES } from "@/lib/game-modes"
+import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
 import { Trophy, Target, Clock, RotateCcw, Home, TrendingUp } from "lucide-react"
+import { useTranslations } from "@/hooks/use-translations"
 
 interface SessionResultsProps {
   session: GameSession | null
@@ -16,11 +19,12 @@ interface SessionResultsProps {
 }
 
 export function SessionResults({ session, onRestart, onExit, mode, difficulty }: SessionResultsProps) {
+  const t = useTranslations()
   if (!session) {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <p>No session data available</p>
+          <p>{t.sessionResults.noData}</p>
         </CardContent>
       </Card>
     )
@@ -33,20 +37,26 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
       : 0
   const averageTime = totalTime / session.totalQuestions
 
-  const getPerformanceLevel = (accuracy: number) => {
-    if (accuracy >= 90) return { level: "Excellent", color: "text-green-500", bgColor: "bg-green-500/10" }
-    if (accuracy >= 75) return { level: "Good", color: "text-blue-500", bgColor: "bg-blue-500/10" }
-    if (accuracy >= 60) return { level: "Fair", color: "text-yellow-500", bgColor: "bg-yellow-500/10" }
-    return { level: "Needs Practice", color: "text-red-500", bgColor: "bg-red-500/10" }
+  const getPerformanceLevel = (value: number) => {
+    if (value >= 90) return { key: "excellent" as const, color: "text-green-500", bgColor: "bg-green-500/10" }
+    if (value >= 75) return { key: "good" as const, color: "text-blue-500", bgColor: "bg-blue-500/10" }
+    if (value >= 60) return { key: "fair" as const, color: "text-yellow-500", bgColor: "bg-yellow-500/10" }
+    return { key: "needsPractice" as const, color: "text-red-500", bgColor: "bg-red-500/10" }
   }
 
   const performance = getPerformanceLevel(accuracy)
+  const performanceLabel = t.sessionResults.performanceLevels[performance.key]
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
+
+  const modeConfig = GAME_MODES[mode]
+  const difficultyConfig = DIFFICULTY_LEVELS[difficulty] ?? DIFFICULTY_LEVELS.beginner
+  const modeName = t.gameModes?.[mode]?.name ?? modeConfig.name
+  const difficultyName = t.difficulties?.[difficulty]?.name ?? difficultyConfig.name
 
   return (
     <div className="space-y-6">
@@ -57,9 +67,9 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
             <Trophy className={`h-8 w-8 ${performance.color}`} />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-balance">Training Session Complete!</h2>
+        <h2 className="text-2xl font-bold text-balance">{t.sessionResults.completeTitle}</h2>
         <p className="text-muted-foreground">
-          You completed {session.totalQuestions} questions in {mode} mode at {difficulty} difficulty
+          {t.sessionResults.summaryIntro(session.totalQuestions, modeName, difficultyName)}
         </p>
       </div>
 
@@ -68,7 +78,7 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Performance Summary
+            {t.sessionResults.performanceSummary}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -77,16 +87,16 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Accuracy</span>
+                <span className="font-medium">{t.sessionResults.accuracy}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold">{accuracy.toFixed(1)}%</span>
-                <Badge className={`${performance.bgColor} ${performance.color} border-0`}>{performance.level}</Badge>
+                <Badge className={`${performance.bgColor} ${performance.color} border-0`}>{performanceLabel}</Badge>
               </div>
             </div>
             <Progress value={accuracy} className="h-3" />
             <p className="text-sm text-muted-foreground">
-              {session.score} correct out of {session.totalQuestions} questions
+              {t.sessionResults.accuracySummary(session.score, session.totalQuestions)}
             </p>
           </div>
 
@@ -95,14 +105,14 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Total Time</span>
+                <span className="font-medium">{t.sessionResults.totalTime}</span>
               </div>
               <p className="text-xl font-bold">{formatTime(totalTime)}</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Average per Question</span>
+                <span className="font-medium">{t.sessionResults.averagePerQuestion}</span>
               </div>
               <p className="text-xl font-bold">{formatTime(averageTime)}</p>
             </div>
@@ -113,7 +123,7 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
       {/* Detailed Results */}
       <Card>
         <CardHeader>
-          <CardTitle>Question Breakdown</CardTitle>
+          <CardTitle>{t.sessionResults.questionBreakdown}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -124,12 +134,14 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{question.correctAnswer.join(" - ")}</p>
                     {question.userAnswer && (
-                      <p className="text-xs text-muted-foreground">Your answer: {question.userAnswer.join(" - ")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.sessionResults.yourAnswer}: {question.userAnswer.join(" - ")}
+                      </p>
                     )}
                   </div>
                 </div>
                 <Badge variant={question.isCorrect ? "default" : "destructive"}>
-                  {question.isCorrect ? "Correct" : "Incorrect"}
+                  {question.isCorrect ? t.sessionResults.correct : t.sessionResults.incorrect}
                 </Badge>
               </div>
             ))}
@@ -141,11 +153,11 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Button onClick={onRestart} size="lg" className="flex items-center gap-2">
           <RotateCcw className="h-4 w-4" />
-          Try Again
+          {t.sessionResults.tryAgain}
         </Button>
         <Button onClick={onExit} variant="outline" size="lg" className="flex items-center gap-2 bg-transparent">
           <Home className="h-4 w-4" />
-          Back to Menu
+          {t.sessionResults.backToMenu}
         </Button>
       </div>
 
@@ -153,14 +165,13 @@ export function SessionResults({ session, onRestart, onExit, mode, difficulty }:
       {accuracy < 75 && (
         <Card className="border-yellow-500/20 bg-yellow-500/5">
           <CardHeader>
-            <CardTitle className="text-yellow-600">Tips for Improvement</CardTitle>
+            <CardTitle className="text-yellow-600">{t.sessionResults.tipsTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li>• Practice identifying chord qualities (major, minor, dominant 7th)</li>
-              <li>• Listen to the bass line to identify root movement</li>
-              <li>• Start with simpler progressions and gradually increase difficulty</li>
-              <li>• Use the hint feature to learn common progression patterns</li>
+              {t.sessionResults.tips.map((tip, idx) => (
+                <li key={idx}>{tip}</li>
+              ))}
             </ul>
           </CardContent>
         </Card>
