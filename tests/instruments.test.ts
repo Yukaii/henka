@@ -41,4 +41,31 @@ describe("Instrument definitions", () => {
     assert.ok(sampled?.sample)
     assert.ok(sampled?.sample?.files.length)
   })
+
+  it("prioritises sampled instruments before generated voices", () => {
+    const sampleIndices = INSTRUMENT_OPTIONS.reduce<number[]>((indices, option, index) => {
+      if (option.playback === "sample") {
+        indices.push(index)
+      }
+      return indices
+    }, [])
+
+    assert(sampleIndices.length > 0, "Expected at least one sampled instrument")
+
+    const firstSynthIndex = INSTRUMENT_OPTIONS.findIndex((option) => option.playback === "synth")
+    if (firstSynthIndex === -1) return
+
+    assert(sampleIndices.every((index) => index < firstSynthIndex), "Sample instruments should precede synth options")
+  })
+
+  it("exposes additional sampled instrument presets", () => {
+    const expectedSampleIds = ["sampled_violin", "sampled_flute", "sampled_trumpet"]
+
+    for (const id of expectedSampleIds) {
+      const option = INSTRUMENT_OPTIONS.find((entry) => entry.id === id)
+      assert.ok(option, `${id} preset missing`)
+      assert.equal(option?.playback, "sample")
+      assert.ok(option?.sample?.files.length)
+    }
+  })
 })
