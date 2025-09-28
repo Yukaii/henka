@@ -15,6 +15,7 @@ interface ChordSelectorProps {
 
 export function ChordSelector({ value, onChange, mode, difficulty, disabled, placeholder }: ChordSelectorProps) {
   const difficultyLevel = DIFFICULTY_LEVELS[difficulty]
+  const showInversions = difficulty === "advanced" && difficultyLevel?.useInversions
 
   if (mode === "absolute") {
     // Generate all possible chord combinations for absolute mode
@@ -29,7 +30,7 @@ export function ChordSelector({ value, onChange, mode, difficulty, disabled, pla
         chordOptions.push(chordName)
 
         // Add inversion options if enabled
-        if (difficultyLevel.useInversions) {
+        if (showInversions) {
           for (let inv = 1; inv <= difficultyLevel.maxInversion; inv++) {
             const inversionSuffix = inv === 1 ? "/1st" : inv === 2 ? "/2nd" : inv === 3 ? "/3rd" : `/${inv}th`
             chordOptions.push(`${chordName}${inversionSuffix}`)
@@ -95,7 +96,7 @@ export function ChordSelector({ value, onChange, mode, difficulty, disabled, pla
           romanOptions.push(romanChord)
 
           // Add inversion options if enabled
-          if (difficultyLevel.useInversions) {
+          if (showInversions) {
             for (let inv = 1; inv <= difficultyLevel.maxInversion; inv++) {
               const inversionSuffix = inv === 1 ? "/1st" : inv === 2 ? "/2nd" : inv === 3 ? "/3rd" : `/${inv}th`
               romanOptions.push(`${romanChord}${inversionSuffix}`)

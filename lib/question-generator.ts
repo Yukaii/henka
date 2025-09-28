@@ -87,7 +87,7 @@ export class QuestionGenerator {
     options?: ProgressionGenerationOptions,
   ): Question {
     const progression = this.chordGenerator.generateRandomProgression(difficulty, undefined, options)
-    const correctAnswer = this.generateCorrectAnswer(progression, mode)
+    const correctAnswer = this.generateCorrectAnswer(progression, mode, difficulty)
 
     return {
       id: questionId || `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -121,12 +121,33 @@ export class QuestionGenerator {
     }
   }
 
-  private generateCorrectAnswer(progression: ChordProgression, mode: GameMode): string[] {
+  private generateCorrectAnswer(
+    progression: ChordProgression,
+    mode: GameMode,
+    difficulty: string,
+  ): string[] {
+    const isAdvanced = difficulty === "advanced"
+
     if (mode === "absolute") {
-      return progression.chords.map((chord) => chord.name)
+      return progression.chords.map((chord) => {
+        if (isAdvanced) {
+          return chord.name
+        }
+
+        const [baseName] = chord.name.split("/")
+        return baseName
+      })
     } else {
       // Transpose mode - return Roman numerals
-      return progression.chords.map((chord) => chord.romanNumeral || "I")
+      return progression.chords.map((chord) => {
+        const roman = chord.romanNumeral || "I"
+        if (isAdvanced) {
+          return roman
+        }
+
+        const [baseRoman] = roman.split("/")
+        return baseRoman
+      })
     }
   }
 

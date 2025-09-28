@@ -64,7 +64,7 @@ export default function ChordTrainerApp() {
           : "Root position only"
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-32 sm:pb-0">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -136,22 +136,32 @@ export default function ChordTrainerApp() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={handleStartTraining} className="flex-1" size="lg">
+                <div className="hidden gap-2 sm:grid sm:grid-cols-3">
+                  <Button onClick={handleStartTraining} className="w-full" size="lg">
                     Start Training
                   </Button>
-                  <Button onClick={handleSetup} variant="outline" className="flex-1" size="lg">
+                  <Button onClick={handleSetup} variant="outline" className="w-full" size="lg">
                     Full Setup
+                  </Button>
+                  <Button onClick={() => setCurrentView("progress")} variant="ghost" className="w-full" size="lg">
+                    <BarChart3 className="mr-2 h-4 w-4" /> Progress
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex gap-3">
-              <Button onClick={() => setCurrentView("progress")} variant="outline" className="flex-1">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Progress
-              </Button>
+            <div className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-4 pt-3 shadow-md backdrop-blur">
+              <div className="grid grid-cols-1 gap-2">
+                <Button onClick={handleStartTraining} className="w-full" size="default">
+                  Start Training
+                </Button>
+                <Button onClick={handleSetup} variant="outline" className="w-full" size="default">
+                  Full Setup
+                </Button>
+                <Button onClick={() => setCurrentView("progress")} variant="ghost" className="w-full" size="default">
+                  <BarChart3 className="mr-2 h-4 w-4" /> Progress
+                </Button>
+              </div>
             </div>
           </div>
         )
@@ -192,7 +202,7 @@ export default function ChordTrainerApp() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-md space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 pb-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/welcome">Welcome</Link>
           </Button>
