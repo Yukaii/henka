@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PlaygroundWheel } from "@/components/playground/playground-wheel"
 import { PlaygroundTimeline } from "@/components/playground/playground-timeline"
@@ -9,6 +10,7 @@ import {
   CIRCLE_OF_FIFTHS,
   DEFAULT_PLAYGROUND_KEY,
   DEFAULT_PLAYGROUND_MODE,
+  DEFAULT_PLAYGROUND_TEMPO,
   clampSlots,
   createChord,
   createEmptySlot,
@@ -30,10 +32,12 @@ import { AudioEngine } from "@/lib/audio-engine"
 import { ChordGenerator } from "@/lib/chord-generator"
 import { useSettings } from "@/components/settings-provider"
 import { useTranslations } from "@/hooks/use-translations"
-import { PauseCircle, PlayCircle, Save, Upload, X } from "lucide-react"
+import Link from "next/link"
+import { PauseCircle, PlayCircle, Save, Upload, X, SlidersHorizontal } from "lucide-react"
 
-const LOOP_CHORD_DURATION = 2
 const SAVE_SLOT_COUNT = 4
+const MIN_TEMPO = 60
+const MAX_TEMPO = 180
 
 function createDefaultSaveSlot(index: number): PlaygroundSaveSlot {
   return {
@@ -76,11 +80,15 @@ export function PlaygroundView() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [isLooping, setIsLooping] = useState(false)
   const [savedSets, setSavedSets] = useState<PlaygroundSaveSlot[]>([])
+  const [tempo, setTempo] = useState<number>(DEFAULT_PLAYGROUND_TEMPO)
+  const [controlsOpen, setControlsOpen] = useState(false)
 
   const audioEngineRef = useRef(new AudioEngine())
   const chordGeneratorRef = useRef(new ChordGenerator())
   const slotsRef = useRef<PlaygroundSlot[]>(slots)
   const selectedIndexRef = useRef(selectedIndex)
+
+  const getChordDuration = useCallback(() => Math.max(0.6, 240 / Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo))), [tempo])
 
   useEffect(() => {
     slotsRef.current = slots
@@ -98,6 +106,7 @@ export function PlaygroundView() {
       setKeySignature(normalizeKeySignature(storedState.key))
       const restoredSlots = clampSlots(createSlotsFromSnapshot(storedState.slots))
       setSlots(restoredSlots)
+      setTempo(storedState.tempo ?? DEFAULT_PLAYGROUND_TEMPO)
       setSelectedIndex(0)
     }
 
@@ -118,8 +127,9 @@ export function PlaygroundView() {
       mode,
       key: keySignature,
       slots: serializeSlots(slots),
+      tempo,
     })
-  }, [mode, keySignature, slots])
+  }, [mode, keySignature, slots, tempo])
 
   useEffect(() => {
     saveSavedSets(savedSets)
@@ -137,9 +147,10 @@ export function PlaygroundView() {
       }
 
       const chord = createChord(chordGeneratorRef.current, selection)
-      void audioEngineRef.current.playChord(chord, 1.6)
+      const previewDuration = Math.min(3.5, Math.max(1, getChordDuration()))
+      void audioEngineRef.current.playChord(chord, previewDuration)
     },
-    [isLooping],
+    [getChordDuration, isLooping],
   )
 
   const handleCommit = useCallback((selection: PlaygroundChordSelection) => {
@@ -231,8 +242,9 @@ export function PlaygroundView() {
           const visualIndex = slotsRef.current.findIndex((current) => current.id === slot.id)
           setActiveIndex(visualIndex >= 0 ? visualIndex : null)
           const chord = createChord(generator, selection)
+          const duration = getChordDuration()
           try {
-            await engine.playChord(chord, LOOP_CHORD_DURATION)
+            await engine.playChord(chord, duration)
           } catch (error) {
             console.error("Playground loop error", error)
           }
@@ -246,7 +258,7 @@ export function PlaygroundView() {
       cancelled = true
       engine.stop(true)
     }
-  }, [isLooping])
+  }, [getChordDuration, isLooping])
 
   const handleToggleLoop = useCallback(() => {
     setIsLooping((prev) => !prev)
@@ -309,73 +321,135 @@ export function PlaygroundView() {
     }
   }, [mode, t.playground?.modeAbsolute, t.playground?.modeTranspose])
 
-  return (
-    <div className="space-y-10">
-      <div className="space-y-6 rounded-2xl border border-border/60 bg-card/95 p-6 shadow-lg">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {t.playground?.title ?? "Playground"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {t.playground?.subtitle ?? "Build and loop custom chord collections."}
-            </p>
-          </div>
-          <Button onClick={handleToggleLoop} size="lg" variant={isLooping ? "destructive" : "default"}>
-            {isLooping ? (
-              <>
-                <PauseCircle className="mr-2 h-5 w-5" />
-                {t.playground?.stopLoop ?? "Stop Loop"}
-              </>
-            ) : (
-              <>
-                <PlayCircle className="mr-2 h-5 w-5" />
-                {t.playground?.startLoop ?? "Start Loop"}
-              </>
-            )}
-          </Button>
-        </div>
+  const modeControls = (
+    <div className="space-y-3">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t.playground?.modeLabel ?? "Selection Mode"}
+      </span>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant={mode === "absolute" ? "default" : "outline"}
+          onClick={() => setMode("absolute")}
+        >
+          {t.playground?.modeAbsolute ?? "Absolute"}
+        </Button>
+        <Button
+          type="button"
+          variant={mode === "transpose" ? "default" : "outline"}
+          onClick={() => setMode("transpose")}
+        >
+          {t.playground?.modeTranspose ?? "Transpose"}
+        </Button>
+      </div>
+    </div>
+  )
 
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t.playground?.modeLabel ?? "Selection Mode"}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={mode === "absolute" ? "default" : "outline"}
-                onClick={() => setMode("absolute")}
-              >
-                {t.playground?.modeAbsolute ?? "Absolute"}
-              </Button>
-              <Button
-                type="button"
-                variant={mode === "transpose" ? "default" : "outline"}
-                onClick={() => setMode("transpose")}
-              >
-                {t.playground?.modeTranspose ?? "Transpose"}
-              </Button>
+  const keyControls = (
+    <div className="space-y-3">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t.playground?.keyLabel ?? "Key"}
+      </span>
+      <Select value={keySignature} onValueChange={setKeySignature}>
+        <SelectTrigger className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {CIRCLE_OF_FIFTHS.map((key) => (
+            <SelectItem key={key} value={key}>
+              {key}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+
+  const tempoControls = (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t.playground?.tempoLabel ?? "Tempo"}
+        </span>
+        <span className="text-xs font-medium text-muted-foreground">{tempo} BPM</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <input
+          type="range"
+          min={MIN_TEMPO}
+          max={MAX_TEMPO}
+          value={tempo}
+          onChange={(event) => setTempo(Number(event.target.value))}
+          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted"
+          aria-label={t.playground?.tempoLabel ?? "Tempo"}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t.playground?.tempoHint ?? "Each chord holds for a full bar."}
+      </p>
+    </div>
+  )
+
+  const controlPanel = (
+    <div className="space-y-5">
+      {modeControls}
+      {keyControls}
+      {tempoControls}
+    </div>
+  )
+
+  return (
+    <>
+      <div className="space-y-8 sm:space-y-10">
+      <div className="space-y-6 rounded-2xl border border-border/60 bg-card/95 p-6 shadow-lg">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
+              <Link href="/">
+                <span className="sr-only">{t.home?.menuStart ?? "Home"}</span>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">
+                {t.playground?.title ?? "Playground"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t.playground?.subtitle ?? "Build and loop custom chord collections."}
+              </p>
             </div>
           </div>
-
-          <div className="space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t.playground?.keyLabel ?? "Key"}
-            </span>
-            <Select value={keySignature} onValueChange={setKeySignature}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CIRCLE_OF_FIFTHS.map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {key}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <Button onClick={handleToggleLoop} size="lg" variant={isLooping ? "destructive" : "default"}>
+              {isLooping ? (
+                <>
+                  <PauseCircle className="mr-2 h-5 w-5" />
+                  {t.playground?.stopLoop ?? "Stop Loop"}
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="mr-2 h-5 w-5" />
+                  {t.playground?.startLoop ?? "Start Loop"}
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="md:hidden"
+              onClick={() => setControlsOpen(true)}
+            >
+              <SlidersHorizontal className="mr-2 h-5 w-5" />
+              {t.playground?.controlsButton ?? "Controls"}
+            </Button>
           </div>
+        </div>
+
+        <div className="hidden md:grid md:grid-cols-3 md:gap-6">
+          {modeControls}
+          {keyControls}
+          {tempoControls}
         </div>
       </div>
 
@@ -485,6 +559,13 @@ export function PlaygroundView() {
           </div>
         </div>
       )}
+      <Dialog open={controlsOpen} onOpenChange={setControlsOpen}>
+        <DialogContent className="bottom-0 top-auto left-1/2 w-full max-w-lg -translate-x-1/2 translate-y-0 rounded-t-3xl border bg-background p-6 pb-8 shadow-lg sm:bottom-auto sm:top-1/2 sm:max-w-md sm:-translate-y-1/2 sm:rounded-lg">
+          <DialogTitle>{t.playground?.controlsButton ?? "Controls"}</DialogTitle>
+          <div className="mt-4 space-y-5">{controlPanel}</div>
+        </DialogContent>
+      </Dialog>
     </div>
+    </>
   )
 }

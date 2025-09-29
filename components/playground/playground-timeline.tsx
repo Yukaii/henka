@@ -47,7 +47,7 @@ export function PlaygroundTimeline({
         </Button>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 overflow-x-auto pb-3 px-2 sm:px-3">
         {slots.map((slot, index) => {
           const isSelected = index === selectedIndex
           const isActive = index === activeIndex
@@ -65,7 +65,7 @@ export function PlaygroundTimeline({
           return (
             <div
               key={slot.id}
-              className={`flex w-48 min-w-[12rem] flex-col rounded-lg border bg-muted/20 p-3 transition-all ${
+              className={`flex w-40 min-w-[10rem] flex-col rounded-lg border bg-muted/20 p-2.5 transition-all sm:w-48 sm:min-w-[12rem] sm:p-3 ${
                 isSelected ? "ring-2 ring-primary" : "border-border/60"
               } ${isActive ? "border-primary" : ""}`}
             >

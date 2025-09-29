@@ -183,6 +183,9 @@ export const MESSAGES = {
       chordCount: (count: number) => `${count} chords`,
       currentSlotLabel: "Selected Slot",
       modeIndicator: "Mode:",
+      controlsButton: "Controls",
+      tempoLabel: "Tempo",
+      tempoHint: "Each chord holds for a full bar.",
     },
     sessionResults: {
       noData: "No session data available",
@@ -502,6 +505,9 @@ export const MESSAGES = {
       chordCount: (count: number) => `${count} 個のコード`,
       currentSlotLabel: "選択中のスロット",
       modeIndicator: "モード:",
+      controlsButton: "コントロール",
+      tempoLabel: "テンポ",
+      tempoHint: "各コードは1小節分再生されます。",
     },
     sessionResults: {
       noData: "セッションデータがありません",
@@ -820,6 +826,9 @@ export const MESSAGES = {
       chordCount: (count: number) => `共 ${count} 個和弦`,
       currentSlotLabel: "目前槽位",
       modeIndicator: "模式:",
+      controlsButton: "控制",
+      tempoLabel: "速度",
+      tempoHint: "每個和弦維持一個小節。",
     },
     sessionResults: {
       noData: "沒有可用的訓練資料",

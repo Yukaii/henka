@@ -38,6 +38,7 @@ export interface PlaygroundStateSnapshot {
   mode: PlaygroundMode
   key: string
   slots: PlaygroundSlotSnapshot[]
+  tempo?: number
 }
 
 export const PLAYGROUND_STATE_STORAGE_KEY = "henka::playground::state"
@@ -45,6 +46,7 @@ export const PLAYGROUND_SAVES_STORAGE_KEY = "henka::playground::saves"
 
 export const DEFAULT_PLAYGROUND_KEY = "C"
 export const DEFAULT_PLAYGROUND_MODE: PlaygroundMode = "absolute"
+export const DEFAULT_PLAYGROUND_TEMPO = 120
 
 export const CIRCLE_OF_FIFTHS: string[] = [
   "C",
