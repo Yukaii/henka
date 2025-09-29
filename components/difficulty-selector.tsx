@@ -74,7 +74,7 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect, onE
                           onEditCustomDifficulty?.()
                         }}
                       >
-                        Configure
+                        {t.customDifficulty.actions.configure}
                       </Button>
                     )}
                     <div className="flex gap-1">
@@ -93,12 +93,12 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect, onE
               <CardContent className="pt-0">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {chordTypes.slice(0, 4).map((type) => (
-                      <Badge key={type} variant="secondary" className="text-xs">
-                        {type}
-                      </Badge>
-                    ))}
+                    <div className="flex flex-wrap gap-1">
+                      {chordTypes.slice(0, 4).map((type) => (
+                        <Badge key={type} variant="secondary" className="text-xs">
+                          {type}
+                        </Badge>
+                      ))}
                     {chordTypes.length > 4 && (
                       <Badge variant="secondary" className="text-xs">
                         {formatExtraChordTypes(language, chordTypes.length - 4)}

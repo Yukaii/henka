@@ -205,7 +205,7 @@ export default function ChordTrainerApp() {
                           variant="outline"
                           onClick={() => setCustomDialogOpen(true)}
                         >
-                          Edit custom mix
+                          {t.customDifficulty.actions.editMix}
                         </Button>
                       </div>
                     )}

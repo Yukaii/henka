@@ -263,6 +263,58 @@ export const MESSAGES = {
         name: "Advanced",
         description: "Extended harmony across six-chord phrases with frequent inversions and richer tensions.",
       },
+      custom: {
+        name: "Custom",
+        description: "Design your own mix with extended chords, borrowed degrees, and tailored inversion limits.",
+      },
+    },
+    customDifficulty: {
+      title: "Custom difficulty",
+      description: "Choose the chord families you want to drill and dial in inversion behavior.",
+      chordFamiliesLabel: "Chord families",
+      selectedCount: (count: number) => `${count} selected`,
+      groups: {
+        triads: {
+          label: "Triads",
+          helper: "Foundational sonorities",
+        },
+        sevenths: {
+          label: "Sevenths",
+          helper: "Adds leading tones",
+        },
+        extensions: {
+          label: "Extensions",
+          helper: "Color tones and tensions",
+        },
+      },
+      progressionLength: {
+        label: "Progression length",
+        helper: "How many chords per exercise.",
+        option: (count: number) => `${count} chords`,
+      },
+      inversions: {
+        label: "Inversions",
+        helper: "Enable drop-in inversions and control how adventurous they are.",
+        maxLabel: "Max inversion",
+        frequencyLabel: "Inversion frequency",
+        optionLabel: (label: string) => `${label} inversion`,
+        intensityOptions: {
+          subtle: "Subtle (20%)",
+          occasional: "Occasional (40%)",
+          frequent: "Frequent (60%)",
+          bold: "Bold (80%)",
+        },
+      },
+      voiceLeading: {
+        label: "Voice leading",
+        helper: "Keep chords smooth and closely spaced.",
+      },
+      actions: {
+        configure: "Configure",
+        editMix: "Edit custom mix",
+        cancel: "Cancel",
+        save: "Save changes",
+      },
     },
     instruments: {
       sampled_grand: {
@@ -500,6 +552,58 @@ export const MESSAGES = {
         name: "アドバンス",
         description: "6和音フレーズでテンションを含む拡張ハーモニーと頻繁な転回を扱います。",
       },
+      custom: {
+        name: "カスタム",
+        description: "テンションや借用和音を含む自由な組み合わせと、転回の上限を自分で設定できます。",
+      },
+    },
+    customDifficulty: {
+      title: "カスタム難易度",
+      description: "練習したいコードファミリーと転回の使い方を調整します。",
+      chordFamiliesLabel: "コードファミリー",
+      selectedCount: (count: number) => `${count} 件選択`,
+      groups: {
+        triads: {
+          label: "三和音",
+          helper: "基礎的な響き",
+        },
+        sevenths: {
+          label: "セブンス",
+          helper: "導音を追加",
+        },
+        extensions: {
+          label: "テンション",
+          helper: "彩りとテンションを加える",
+        },
+      },
+      progressionLength: {
+        label: "進行の長さ",
+        helper: "1セットあたりのコード数。",
+        option: (count: number) => `${count} 和音`,
+      },
+      inversions: {
+        label: "転回形",
+        helper: "転回を挿入する頻度をコントロールします。",
+        maxLabel: "最大転回",
+        frequencyLabel: "転回の頻度",
+        optionLabel: (label: string) => label,
+        intensityOptions: {
+          subtle: "控えめ (20%)",
+          occasional: "時々 (40%)",
+          frequent: "頻繁 (60%)",
+          bold: "積極的 (80%)",
+        },
+      },
+      voiceLeading: {
+        label: "ボイスリーディング",
+        helper: "和音を滑らかに保ちます。",
+      },
+      actions: {
+        configure: "設定",
+        editMix: "カスタムを編集",
+        cancel: "キャンセル",
+        save: "保存",
+      },
     },
     instruments: {
       sampled_grand: {
@@ -736,6 +840,58 @@ export const MESSAGES = {
       advanced: {
         name: "高階",
         description: "六和弦片語中的延伸和聲，頻繁轉位與豐富張力。",
+      },
+      custom: {
+        name: "自訂",
+        description: "自選延伸與借用和聲，並設定專屬的轉位頻率與上限。",
+      },
+    },
+    customDifficulty: {
+      title: "自訂難度",
+      description: "挑選想練習的和弦家族並調整轉位行為。",
+      chordFamiliesLabel: "和弦家族",
+      selectedCount: (count: number) => `已選 ${count} 項`,
+      groups: {
+        triads: {
+          label: "三和弦",
+          helper: "基礎音色",
+        },
+        sevenths: {
+          label: "七和弦",
+          helper: "加入導音色彩",
+        },
+        extensions: {
+          label: "延伸和聲",
+          helper: "增添色彩與張力",
+        },
+      },
+      progressionLength: {
+        label: "進行長度",
+        helper: "每題包含的和弦數。",
+        option: (count: number) => `${count} 個和弦`,
+      },
+      inversions: {
+        label: "轉位",
+        helper: "控制隨機插入轉位的頻率。",
+        maxLabel: "最大轉位",
+        frequencyLabel: "轉位頻率",
+        optionLabel: (label: string) => label,
+        intensityOptions: {
+          subtle: "輕微 (20%)",
+          occasional: "偶爾 (40%)",
+          frequent: "常見 (60%)",
+          bold: "大量 (80%)",
+        },
+      },
+      voiceLeading: {
+        label: "聲部連接",
+        helper: "讓和弦銜接更平順。",
+      },
+      actions: {
+        configure: "設定",
+        editMix: "編輯自訂配置",
+        cancel: "取消",
+        save: "儲存變更",
       },
     },
     instruments: {

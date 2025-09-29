@@ -8,32 +8,25 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { useSettings } from "@/components/settings-provider"
 import type { CustomDifficultySettings } from "@/lib/chord-generator"
+import { useTranslations } from "@/hooks/use-translations"
+type ChordGroupKey = "triads" | "sevenths" | "extensions"
 
-const CHORD_TYPE_GROUPS: Array<{ label: string; types: string[]; helper: string }> = [
+const CHORD_TYPE_GROUPS: Array<{ id: ChordGroupKey; types: string[] }> = [
+  { id: "triads", types: ["major", "minor", "diminished", "augmented"] },
   {
-    label: "Triads",
-    helper: "Foundational sonorities",
-    types: ["major", "minor", "diminished", "augmented"],
-  },
-  {
-    label: "Sevenths",
-    helper: "Adds leading tones",
+    id: "sevenths",
     types: ["major7", "minor7", "dominant7", "diminished7", "halfDiminished7"],
   },
-  {
-    label: "Extensions",
-    helper: "Color tones and tensions",
-    types: ["major9", "minor9", "dominant9", "major11", "minor11"],
-  },
+  { id: "extensions", types: ["major9", "minor9", "dominant9", "major11", "minor11"] },
 ]
 
-const PROGRESSION_LENGTH_OPTIONS = [3, 4, 5, 6, 7, 8]
-const MAX_INVERSION_OPTIONS = [1, 2, 3, 4, 5]
-const INVERSION_INTENSITY_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 0.2, label: "Subtle (20%)" },
-  { value: 0.4, label: "Occasional (40%)" },
-  { value: 0.6, label: "Frequent (60%)" },
-  { value: 0.8, label: "Bold (80%)" },
+const PROGRESSION_LENGTH_OPTIONS = [3, 4, 5, 6, 7, 8] as const
+const MAX_INVERSION_OPTIONS = [1, 2, 3, 4, 5] as const
+const INVERSION_INTENSITY_OPTIONS = [
+  { value: 0.2, key: "subtle" as const },
+  { value: 0.4, key: "occasional" as const },
+  { value: 0.6, key: "frequent" as const },
+  { value: 0.8, key: "bold" as const },
 ]
 
 interface CustomDifficultyDialogProps {
@@ -42,6 +35,7 @@ interface CustomDifficultyDialogProps {
 }
 
 export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyDialogProps) {
+  const t = useTranslations()
   const { customDifficulty, setCustomDifficulty } = useSettings()
   const [localConfig, setLocalConfig] = useState<CustomDifficultySettings>(customDifficulty)
 
@@ -111,52 +105,55 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
-        <DialogTitle className="text-lg font-semibold">Custom difficulty</DialogTitle>
+        <DialogTitle className="text-lg font-semibold">{t.customDifficulty.title}</DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
-          Choose the chord families you want to drill and dial in inversion behavior.
+          {t.customDifficulty.description}
         </DialogDescription>
 
         <div className="mt-4 space-y-6">
           <section className="space-y-2">
             <div className="flex items-baseline justify-between">
-              <h3 className="text-sm font-semibold">Chord families</h3>
+              <h3 className="text-sm font-semibold">{t.customDifficulty.chordFamiliesLabel}</h3>
               <Badge variant="outline" className="text-xs">
-                {selectedChordTypes.size} selected
+                {t.customDifficulty.selectedCount(selectedChordTypes.size)}
               </Badge>
             </div>
             <div className="space-y-3">
-              {CHORD_TYPE_GROUPS.map((group) => (
-                <div key={group.label} className="space-y-2">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-sm font-medium">{group.label}</span>
-                    <span className="text-xs text-muted-foreground">{group.helper}</span>
+              {CHORD_TYPE_GROUPS.map((group) => {
+                const groupMessages = t.customDifficulty.groups[group.id]
+                return (
+                  <div key={group.id} className="space-y-2">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm font-medium">{groupMessages.label}</span>
+                      <span className="text-xs text-muted-foreground">{groupMessages.helper}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {group.types.map((type) => {
+                        const active = selectedChordTypes.has(type)
+                        return (
+                          <Button
+                            key={type}
+                            type="button"
+                            variant={active ? "default" : "outline"}
+                            className="h-auto rounded-full px-3 py-1 text-xs capitalize"
+                            onClick={() => handleToggleChordType(type)}
+                          >
+                            {type}
+                          </Button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {group.types.map((type) => {
-                      const active = selectedChordTypes.has(type)
-                      return (
-                        <Button
-                          key={type}
-                          type="button"
-                          variant={active ? "default" : "outline"}
-                          className="h-auto rounded-full px-3 py-1 text-xs capitalize"
-                          onClick={() => handleToggleChordType(type)}
-                        >
-                          {type}
-                        </Button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </section>
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold">Progression length</h3>
-                <p className="text-xs text-muted-foreground">How many chords per exercise.</p>
+                <h3 className="text-sm font-semibold">{t.customDifficulty.progressionLength.label}</h3>
+                <p className="text-xs text-muted-foreground">{t.customDifficulty.progressionLength.helper}</p>
               </div>
               <Select value={String(localConfig.progressionLength)} onValueChange={handleProgressionLengthChange}>
                 <SelectTrigger className="w-[120px]">
@@ -165,7 +162,7 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
                 <SelectContent>
                   {PROGRESSION_LENGTH_OPTIONS.map((option) => (
                     <SelectItem key={option} value={String(option)}>
-                      {option} chords
+                      {t.customDifficulty.progressionLength.option(option)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -176,10 +173,8 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
           <section className="space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-sm font-semibold">Inversions</h3>
-                <p className="text-xs text-muted-foreground">
-                  Enable drop-in inversions and control how adventurous they are.
-                </p>
+                <h3 className="text-sm font-semibold">{t.customDifficulty.inversions.label}</h3>
+                <p className="text-xs text-muted-foreground">{t.customDifficulty.inversions.helper}</p>
               </div>
               <Switch checked={localConfig.useInversions} onCheckedChange={handleUseInversionsChange} />
             </div>
@@ -187,7 +182,9 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
             {localConfig.useInversions && (
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Max inversion</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t.customDifficulty.inversions.maxLabel}
+                  </p>
                   <Select value={String(localConfig.maxInversion)} onValueChange={handleMaxInversionChange}>
                     <SelectTrigger>
                       <SelectValue />
@@ -195,14 +192,16 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
                     <SelectContent>
                       {MAX_INVERSION_OPTIONS.map((option) => (
                         <SelectItem key={option} value={String(option)}>
-                          {option === 1 ? "1st" : option === 2 ? "2nd" : option === 3 ? "3rd" : `${option}th`} inversion
+                          {t.customDifficulty.inversions.optionLabel(t.labels.inversion(option))}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Inversion frequency</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t.customDifficulty.inversions.frequencyLabel}
+                  </p>
                   <Select
                     value={String(localConfig.inversionProbability)}
                     onValueChange={handleInversionIntensityChange}
@@ -213,7 +212,7 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
                     <SelectContent>
                       {INVERSION_INTENSITY_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={String(option.value)}>
-                          {option.label}
+                          {t.customDifficulty.inversions.intensityOptions[option.key]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -225,8 +224,8 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
 
           <section className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold">Voice leading</h3>
-              <p className="text-xs text-muted-foreground">Keep chords smooth and closely spaced.</p>
+              <h3 className="text-sm font-semibold">{t.customDifficulty.voiceLeading.label}</h3>
+              <p className="text-xs text-muted-foreground">{t.customDifficulty.voiceLeading.helper}</p>
             </div>
             <Switch checked={localConfig.useVoiceLeading} onCheckedChange={handleVoiceLeadingChange} />
           </section>
@@ -234,10 +233,10 @@ export function CustomDifficultyDialog({ open, onOpenChange }: CustomDifficultyD
 
         <div className="mt-6 flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t.customDifficulty.actions.cancel}
           </Button>
           <Button type="button" size="sm" onClick={handleSave}>
-            Save changes
+            {t.customDifficulty.actions.save}
           </Button>
         </div>
       </DialogContent>
