@@ -14,7 +14,7 @@ import { CustomDifficultyDialog } from "@/components/custom-difficulty-dialog"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
 import { type GameMode, GAME_MODES } from "@/lib/game-modes"
 import { WELCOME_SEEN_KEY } from "@/lib/storage-keys"
-import { Settings, BarChart3, ArrowLeft } from "lucide-react"
+import { Settings, BarChart3, ArrowLeft, Compass } from "lucide-react"
 import { useTranslations } from "@/hooks/use-translations"
 import { useSettings } from "@/components/settings-provider"
 import { formatChordFamilies, formatChordPhrases, formatInversionSummary, formatKeys } from "@/lib/i18n"
@@ -93,6 +93,10 @@ export default function ChordTrainerApp() {
 
   const handleSetup = () => {
     setCurrentView("setup")
+  }
+
+  const handleOpenPlayground = () => {
+    router.push("/playground")
   }
 
   const handleBackToMenu = () => {
@@ -212,7 +216,7 @@ export default function ChordTrainerApp() {
                   </div>
                 </div>
 
-                <div className="hidden gap-2 sm:grid sm:grid-cols-3">
+                <div className="hidden sm:flex sm:flex-col sm:gap-2">
                   <Button onClick={handleStartTraining} className="w-full" size="lg">
                     {t.home.startTraining}
                   </Button>
@@ -222,12 +226,15 @@ export default function ChordTrainerApp() {
                   <Button onClick={() => setCurrentView("progress")} variant="ghost" className="w-full" size="lg">
                     <BarChart3 className="mr-2 h-4 w-4" /> {t.home.progress}
                   </Button>
+                  <Button onClick={handleOpenPlayground} variant="ghost" className="w-full" size="lg">
+                    <Compass className="mr-2 h-4 w-4" /> {t.home.playground}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
             <div className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-4 pt-3 shadow-md backdrop-blur">
-              <div className="grid grid-cols-1 gap-2">
+              <div className="flex flex-col gap-2">
                 <Button onClick={handleStartTraining} className="w-full" size="default">
                   {t.home.startTraining}
                 </Button>
@@ -236,6 +243,9 @@ export default function ChordTrainerApp() {
                 </Button>
                 <Button onClick={() => setCurrentView("progress")} variant="ghost" className="w-full" size="default">
                   <BarChart3 className="mr-2 h-4 w-4" /> {t.home.progress}
+                </Button>
+                <Button onClick={handleOpenPlayground} variant="ghost" className="w-full" size="default">
+                  <Compass className="mr-2 h-4 w-4" /> {t.home.playground}
                 </Button>
               </div>
             </div>
