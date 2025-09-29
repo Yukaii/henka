@@ -3,6 +3,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { DEFAULT_INSTRUMENT_ID, isInstrumentId, type InstrumentId } from "@/lib/instruments"
 import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguage } from "@/lib/i18n"
+import {
+  type CustomDifficultySettings,
+  getCustomDifficultySettings,
+  updateCustomDifficultySettings,
+} from "@/lib/chord-generator"
 
 type SettingsContextValue = {
   debugMode: boolean
@@ -13,6 +18,8 @@ type SettingsContextValue = {
   setVoiceLeading: (value: boolean) => void
   language: SupportedLanguage
   setLanguage: (value: SupportedLanguage) => void
+  customDifficulty: CustomDifficultySettings
+  setCustomDifficulty: (value: CustomDifficultySettings) => void
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
@@ -22,6 +29,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [instrument, setInstrumentState] = useState<InstrumentId>(DEFAULT_INSTRUMENT_ID)
   const [voiceLeading, setVoiceLeading] = useState(true)
   const [language, setLanguageState] = useState<SupportedLanguage>(DEFAULT_LANGUAGE)
+  const [customDifficulty, setCustomDifficultyState] = useState<CustomDifficultySettings>(() => getCustomDifficultySettings())
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -48,6 +56,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return
     window.localStorage.setItem("henka::voiceLeading", String(voiceLeading))
   }, [voiceLeading])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const stored = window.localStorage.getItem("henka::customDifficulty")
+    if (!stored) return
+
+    try {
+      const parsed = JSON.parse(stored) as CustomDifficultySettings
+      const sanitized = updateCustomDifficultySettings({ ...getCustomDifficultySettings(), ...parsed })
+      setCustomDifficultyState(sanitized)
+    } catch {
+      const fallback = updateCustomDifficultySettings(getCustomDifficultySettings())
+      setCustomDifficultyState(fallback)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("henka::customDifficulty", JSON.stringify(customDifficulty))
+  }, [customDifficulty])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -84,6 +112,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setLanguageState(value)
   }, [])
 
+  const handleSetCustomDifficulty = useCallback((value: CustomDifficultySettings) => {
+    const sanitized = updateCustomDifficultySettings(value)
+    setCustomDifficultyState(sanitized)
+  }, [])
+
   const value = useMemo(
     () => ({
       debugMode,
@@ -94,8 +127,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setVoiceLeading,
       language,
       setLanguage: handleSetLanguage,
+      customDifficulty,
+      setCustomDifficulty: handleSetCustomDifficulty,
     }),
-    [debugMode, handleSetInstrument, handleSetLanguage, instrument, language, voiceLeading],
+    [
+      customDifficulty,
+      debugMode,
+      handleSetCustomDifficulty,
+      handleSetInstrument,
+      handleSetLanguage,
+      instrument,
+      language,
+      voiceLeading,
+    ],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

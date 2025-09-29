@@ -41,10 +41,121 @@ export interface DifficultyLevel {
   maxInversion: number // Maximum inversion to use (0=root, 1=first, 2=second, etc.)
   allowedKeys?: string[] // Optional: limit to specific keys for easier modes
   useVoiceLeading?: boolean
+  randomizeChordTypes?: boolean
 }
 
 export interface ProgressionGenerationOptions {
   voiceLeading?: boolean
+}
+
+export interface CustomDifficultySettings {
+  chordTypes: string[]
+  progressionLength: number
+  useInversions: boolean
+  inversionProbability: number
+  maxInversion: number
+  allowedKeys?: string[]
+  useVoiceLeading: boolean
+}
+
+const CUSTOM_TEMPLATE_BASE = ["I", "vi", "IV", "V", "ii", "iii", "vii°"]
+
+const ALL_CHORD_TYPES = [
+  "major",
+  "minor",
+  "diminished",
+  "augmented",
+  "major7",
+  "minor7",
+  "dominant7",
+  "diminished7",
+  "halfDiminished7",
+  "major9",
+  "minor9",
+  "dominant9",
+  "major11",
+  "minor11",
+]
+
+export const DEFAULT_CUSTOM_DIFFICULTY_SETTINGS: CustomDifficultySettings = {
+  chordTypes: ALL_CHORD_TYPES,
+  progressionLength: 6,
+  useInversions: true,
+  inversionProbability: 0.5,
+  maxInversion: 3,
+  allowedKeys: undefined,
+  useVoiceLeading: true,
+}
+
+function sanitizeCustomDifficultySettings(settings: CustomDifficultySettings): CustomDifficultySettings {
+  const validChordTypes = settings.chordTypes
+    .filter((type) => Object.prototype.hasOwnProperty.call(CHORD_TYPES, type))
+  const chordTypes = validChordTypes.length > 0 ? Array.from(new Set(validChordTypes)) : ["major", "minor"]
+
+  const rawLength = Number.isFinite(settings.progressionLength) ? Math.round(settings.progressionLength) : 4
+  const progressionLength = Math.min(Math.max(rawLength, 3), 8)
+
+  const rawMaxInversion = Number.isFinite(settings.maxInversion) ? Math.floor(settings.maxInversion) : 0
+  const clampedMaxInversion = Math.min(Math.max(rawMaxInversion, 0), 5)
+
+  const useInversions = settings.useInversions && clampedMaxInversion > 0
+  const inversionProbability = useInversions
+    ? Math.min(Math.max(settings.inversionProbability ?? 0, 0), 1)
+    : 0
+  const maxInversion = useInversions ? clampedMaxInversion : 0
+
+  const allowedKeys = settings.allowedKeys?.filter((key) => KEYS.includes(key))
+  const useVoiceLeading = settings.useVoiceLeading !== false
+
+  return {
+    chordTypes,
+    progressionLength,
+    useInversions,
+    inversionProbability,
+    maxInversion,
+    allowedKeys: allowedKeys && allowedKeys.length > 0 ? allowedKeys : undefined,
+    useVoiceLeading,
+  }
+}
+
+function buildCustomTemplate(length: number): string[] {
+  return Array.from({ length }, (_, index) => CUSTOM_TEMPLATE_BASE[index % CUSTOM_TEMPLATE_BASE.length])
+}
+
+function createCustomDifficultyLevel(settings: CustomDifficultySettings): DifficultyLevel {
+  const template = buildCustomTemplate(settings.progressionLength)
+
+  return {
+    name: "Custom",
+    description: "Tailor your own mix of chord families and inversion limits.",
+    chordTypes: settings.chordTypes,
+    progressionLength: settings.progressionLength,
+    commonProgressions: [template],
+    useInversions: settings.useInversions,
+    inversionProbability: settings.inversionProbability,
+    maxInversion: settings.maxInversion,
+    allowedKeys: settings.allowedKeys,
+    useVoiceLeading: settings.useVoiceLeading,
+    randomizeChordTypes: true,
+  }
+}
+
+let customDifficultySettings = sanitizeCustomDifficultySettings(DEFAULT_CUSTOM_DIFFICULTY_SETTINGS)
+let customDifficultyLevel = createCustomDifficultyLevel(customDifficultySettings)
+
+export function getCustomDifficultySettings(): CustomDifficultySettings {
+  return { ...customDifficultySettings }
+}
+
+export function getCustomDifficultyLevel(): DifficultyLevel {
+  return customDifficultyLevel
+}
+
+export function updateCustomDifficultySettings(settings: CustomDifficultySettings): CustomDifficultySettings {
+  customDifficultySettings = sanitizeCustomDifficultySettings(settings)
+  customDifficultyLevel = createCustomDifficultyLevel(customDifficultySettings)
+  DIFFICULTY_LEVELS.custom = customDifficultyLevel
+  return { ...customDifficultySettings }
 }
 
 export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
@@ -121,6 +232,7 @@ export const DIFFICULTY_LEVELS: Record<string, DifficultyLevel> = {
     maxInversion: 3,
     useVoiceLeading: true,
   },
+  custom: customDifficultyLevel,
 }
 
 export class ChordGenerator {
@@ -134,8 +246,11 @@ export class ChordGenerator {
 
   private romanToChordType(roman: string): string {
     const baseRoman = roman.split("/")[0]
+    if (baseRoman.includes("maj11")) return "major11"
+    if (baseRoman.includes("11")) return baseRoman.includes("m") ? "minor11" : "major11"
     if (baseRoman.includes("maj9")) return "major9"
     if (baseRoman.includes("maj7")) return "major7"
+    if (baseRoman.includes("+")) return "augmented"
     if (baseRoman.includes("9")) return baseRoman.includes("m") ? "minor9" : "dominant9"
     if (baseRoman.includes("7")) {
       if (baseRoman.includes("°")) return "diminished7"
@@ -147,7 +262,12 @@ export class ChordGenerator {
   }
 
   private romanToDegree(roman: string): number {
-    const cleanRoman = roman.replace(/[maj79°ø]/g, "").split("/")[0]
+    const cleanRoman = roman
+      .replace(/maj/gi, "")
+      .replace(/m(?=\d)/g, "")
+      .replace(/[°ø+]/g, "")
+      .replace(/\d/g, "")
+      .split("/")[0]
     const romanMap: Record<string, number> = {
       I: 0,
       II: 1,
@@ -307,6 +427,58 @@ export class ChordGenerator {
     return { inversion: bestInversion, octave: bestOctave }
   }
 
+  private formatRomanForChordType(baseRoman: string, chordType: string): string {
+    const core = baseRoman.replace(/[°ø]/g, "")
+
+    switch (chordType) {
+      case "major":
+        return core.toUpperCase()
+      case "minor":
+        return core.toLowerCase()
+      case "diminished":
+        return `${core.toLowerCase()}°`
+      case "augmented":
+        return `${core.toUpperCase()}+`
+      case "major7":
+        return `${core.toUpperCase()}maj7`
+      case "minor7":
+        return `${core.toLowerCase()}7`
+      case "dominant7":
+        return `${core.toUpperCase()}7`
+      case "diminished7":
+        return `${core.toLowerCase()}°7`
+      case "halfDiminished7":
+        return `${core.toLowerCase()}ø7`
+      case "major9":
+        return `${core.toUpperCase()}maj9`
+      case "minor9":
+        return `${core.toLowerCase()}m9`
+      case "dominant9":
+        return `${core.toUpperCase()}9`
+      case "major11":
+        return `${core.toUpperCase()}maj11`
+      case "minor11":
+        return `${core.toLowerCase()}m11`
+      default:
+        return core
+    }
+  }
+
+  private generateCustomProgressionTemplate(level: DifficultyLevel): string[] {
+    const bases = CUSTOM_TEMPLATE_BASE
+    const chords: string[] = []
+
+    for (let index = 0; index < level.progressionLength; index++) {
+      const base = bases[Math.floor(Math.random() * bases.length)]
+      const chordTypeIndex = Math.floor(Math.random() * level.chordTypes.length)
+      const chordType = level.chordTypes[chordTypeIndex]
+
+      chords.push(this.formatRomanForChordType(base, chordType))
+    }
+
+    return chords
+  }
+
   generateChord(root: string, chordType: string, octave = 4, inversion = 0): Chord {
     const rootMidi = this.keyToMidi(root) + (octave - 4) * 12
     const intervals = CHORD_TYPES[chordType as keyof typeof CHORD_TYPES]
@@ -426,9 +598,10 @@ export class ChordGenerator {
       // Use any key
       selectedKey = KEYS[Math.floor(Math.random() * KEYS.length)]
     }
-    
-    const progressionTemplate = level.commonProgressions[Math.floor(Math.random() * level.commonProgressions.length)]
+    const template = level.randomizeChordTypes
+      ? this.generateCustomProgressionTemplate(level)
+      : level.commonProgressions[Math.floor(Math.random() * level.commonProgressions.length)]
 
-    return this.generateProgressionFromRoman(progressionTemplate, selectedKey, difficulty, options)
+    return this.generateProgressionFromRoman(template, selectedKey, difficulty, options)
   }
 }

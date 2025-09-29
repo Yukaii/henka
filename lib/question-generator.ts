@@ -126,7 +126,7 @@ export class QuestionGenerator {
     mode: GameMode,
     difficulty: string,
   ): string[] {
-    const isAdvanced = difficulty === "advanced"
+    const isAdvanced = difficulty === "advanced" || difficulty === "custom"
 
     if (mode === "absolute") {
       return progression.chords.map((chord) => {

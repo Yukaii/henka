@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
-import { Star, TrendingUp, Zap, RotateCcw, Heart } from "lucide-react"
+import { Star, TrendingUp, Zap, RotateCcw, Heart, Wrench } from "lucide-react"
 import { useTranslations } from "@/hooks/use-translations"
 import { useSettings } from "@/components/settings-provider"
 import {
@@ -16,6 +17,7 @@ import {
 interface DifficultySelectorProps {
   selectedDifficulty: string | null
   onDifficultySelect: (difficulty: string) => void
+  onEditCustomDifficulty?: () => void
 }
 
 const DIFFICULTY_ICONS = {
@@ -23,11 +25,12 @@ const DIFFICULTY_ICONS = {
   beginner: Star,
   intermediate: TrendingUp,
   advanced: Zap,
+  custom: Wrench,
 }
 
-export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: DifficultySelectorProps) {
+export function DifficultySelector({ selectedDifficulty, onDifficultySelect, onEditCustomDifficulty }: DifficultySelectorProps) {
   const t = useTranslations()
-  const { language } = useSettings()
+  const { language, customDifficulty } = useSettings()
 
   return (
     <div className="space-y-4">
@@ -39,6 +42,12 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
           const messages = t.difficulties?.[key]
           const displayName = messages?.name ?? level.name
           const description = messages?.description ?? level.description
+          const isCustom = key === "custom"
+          const chordTypes = isCustom ? customDifficulty.chordTypes : level.chordTypes
+          const useInversions = isCustom ? customDifficulty.useInversions : level.useInversions
+          const inversionProbability = isCustom ? customDifficulty.inversionProbability : level.inversionProbability
+          const maxInversion = isCustom ? customDifficulty.maxInversion : level.maxInversion
+          const allowedKeys = isCustom ? customDifficulty.allowedKeys : level.allowedKeys
 
           return (
             <Card
@@ -49,20 +58,35 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
               onClick={() => onDifficultySelect(key)}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center justify-between">
+                <CardTitle className="text-base flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4 text-primary" />
                     {displayName}
                   </div>
-                  <div className="flex gap-1">
-                    <Badge variant="outline" className="text-xs">
-                      {formatChordTypeBadge(language, level.chordTypes.length)}
-                    </Badge>
-                    {level.useInversions && (
-                      <Badge variant="outline" className="text-xs">
-                        <RotateCcw className="h-3 w-3" />
-                      </Badge>
+                  <div className="flex items-center gap-2">
+                    {isCustom && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onEditCustomDifficulty?.()
+                        }}
+                      >
+                        Configure
+                      </Button>
                     )}
+                    <div className="flex gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        {formatChordTypeBadge(language, chordTypes.length)}
+                      </Badge>
+                      {useInversions && (
+                        <Badge variant="outline" className="text-xs">
+                          <RotateCcw className="h-3 w-3" />
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -70,28 +94,28 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
                   <div className="flex flex-wrap gap-1">
-                    {level.chordTypes.slice(0, 4).map((type) => (
+                    {chordTypes.slice(0, 4).map((type) => (
                       <Badge key={type} variant="secondary" className="text-xs">
                         {type}
                       </Badge>
                     ))}
-                    {level.chordTypes.length > 4 && (
+                    {chordTypes.length > 4 && (
                       <Badge variant="secondary" className="text-xs">
-                        {formatExtraChordTypes(language, level.chordTypes.length - 4)}
+                        {formatExtraChordTypes(language, chordTypes.length - 4)}
                       </Badge>
                     )}
                   </div>
-                  {level.useInversions && (
+                  {useInversions && (
                     <p className="text-xs text-muted-foreground">
-                      {formatInversionProbability(language, level.inversionProbability, level.maxInversion)}
+                      {formatInversionProbability(language, inversionProbability, maxInversion)}
                     </p>
                   )}
-                  {level.allowedKeys && (
+                  {allowedKeys && (
                     <p className="text-xs text-muted-foreground">
                       {formatKeysWithOptions(
                         language,
-                        level.allowedKeys,
-                        level.allowedKeys.length * level.chordTypes.length,
+                        allowedKeys,
+                        allowedKeys.length * chordTypes.length,
                       )}
                     </p>
                   )}
@@ -101,6 +125,7 @@ export function DifficultySelector({ selectedDifficulty, onDifficultySelect }: D
           )
         })}
       </div>
+
     </div>
   )
 }

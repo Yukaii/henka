@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { ChordGenerator } from "../lib/chord-generator"
+import { ChordGenerator, getCustomDifficultySettings, updateCustomDifficultySettings } from "../lib/chord-generator"
 
 describe("ChordGenerator Roman numeral mapping", () => {
   it("distinguishes between I and IV chords in G major", () => {
@@ -67,5 +67,37 @@ describe("ChordGenerator Roman numeral mapping", () => {
       assert.deepStrictEqual(chord.notes, noteExpectations[index])
       assert.strictEqual(chord.inversion ?? 0, inversions[index])
     })
+  })
+
+  it("follows custom chord type selections when generating progressions", () => {
+    const base = getCustomDifficultySettings()
+    updateCustomDifficultySettings({
+      ...base,
+      chordTypes: ["major9", "minor11"],
+      progressionLength: 5,
+      useInversions: true,
+      inversionProbability: 0.6,
+      maxInversion: 3,
+      useVoiceLeading: false,
+    })
+
+    const generator = new ChordGenerator()
+    const progression = generator.generateRandomProgression("custom", "C")
+
+    assert.equal(progression.chords.length, 5)
+    progression.chords.forEach((chord) => {
+      const roman = chord.romanNumeral ?? ""
+      const matchesCustom = roman.includes("maj9") || roman.includes("m11")
+      assert.equal(matchesCustom, true)
+    })
+  })
+
+  it("supports augmented and 11th chord parsing", () => {
+    const generator = new ChordGenerator()
+    const progression = generator.generateProgressionFromRoman(["I+", "iim11"], "C")
+
+    assert.equal(progression.chords.length, 2)
+    assert.equal(progression.chords[0].name.toLowerCase().includes("augmented"), true)
+    assert.equal(progression.chords[1].name.toLowerCase().includes("minor11"), true)
   })
 })

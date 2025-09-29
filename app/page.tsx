@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SettingsModal } from "@/components/settings-modal"
+import { CustomDifficultyDialog } from "@/components/custom-difficulty-dialog"
 import { DIFFICULTY_LEVELS } from "@/lib/chord-generator"
 import { type GameMode, GAME_MODES } from "@/lib/game-modes"
 import { WELCOME_SEEN_KEY } from "@/lib/storage-keys"
@@ -37,6 +38,7 @@ export default function ChordTrainerApp() {
   const [selectedMode, setSelectedMode] = useState<GameMode>("transpose")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("beginner")
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
@@ -195,6 +197,18 @@ export default function ChordTrainerApp() {
                       <span>{inversionSummary}</span>
                       <span>{formatKeys(language, difficultyConfig.allowedKeys)}</span>
                     </div>
+                    {selectedDifficulty === "custom" && (
+                      <div className="pt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setCustomDialogOpen(true)}
+                        >
+                          Edit custom mix
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -241,7 +255,11 @@ export default function ChordTrainerApp() {
 
             <GameModeSelector selectedMode={selectedMode} onModeSelect={setSelectedMode} />
 
-            <DifficultySelector selectedDifficulty={selectedDifficulty} onDifficultySelect={setSelectedDifficulty} />
+            <DifficultySelector
+              selectedDifficulty={selectedDifficulty}
+              onDifficultySelect={setSelectedDifficulty}
+              onEditCustomDifficulty={() => setCustomDialogOpen(true)}
+            />
 
             <Button onClick={handleStartTraining} className="w-full" size="lg">
               {t.home.startTraining}
@@ -280,6 +298,7 @@ export default function ChordTrainerApp() {
         {renderContent()}
       </div>
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <CustomDifficultyDialog open={customDialogOpen} onOpenChange={setCustomDialogOpen} />
     </div>
   )
 }

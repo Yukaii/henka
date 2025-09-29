@@ -15,7 +15,7 @@ interface ChordSelectorProps {
 
 export function ChordSelector({ value, onChange, mode, difficulty, disabled, placeholder }: ChordSelectorProps) {
   const difficultyLevel = DIFFICULTY_LEVELS[difficulty]
-  const showInversions = difficulty === "advanced" && difficultyLevel?.useInversions
+  const showInversions = (difficulty === "advanced" || difficulty === "custom") && difficultyLevel?.useInversions
 
   if (mode === "absolute") {
     // Generate all possible chord combinations for absolute mode
@@ -71,31 +71,61 @@ export function ChordSelector({ value, onChange, mode, difficulty, disabled, pla
     const baseRomanNumerals = ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
 
     baseRomanNumerals.forEach((roman) => {
+      const core = roman.replace(/[°]/g, "")
+
       difficultyLevel.chordTypes.forEach((chordType) => {
         let romanChord = roman
 
-        if (chordType === "major7") {
-          romanChord = roman === roman.toLowerCase() ? `${roman}maj7` : `${roman}maj7`
-        } else if (chordType === "minor7") {
-          romanChord = roman === roman.toLowerCase() ? `${roman}7` : `${roman.toLowerCase()}7`
-        } else if (chordType === "dominant7") {
-          romanChord = `${roman}7`
-        } else if (chordType === "diminished7") {
-          romanChord = `${roman}°7`
-        } else if (chordType === "halfDiminished7") {
-          romanChord = `${roman}ø7`
-        } else if (chordType === "major9") {
-          romanChord = `${roman}maj9`
-        } else if (chordType === "minor9") {
-          romanChord = `${roman}9`
-        } else if (chordType === "dominant9") {
-          romanChord = `${roman}9`
+        switch (chordType) {
+          case "major":
+            romanChord = core.toUpperCase()
+            break
+          case "minor":
+            romanChord = core.toLowerCase()
+            break
+          case "diminished":
+            romanChord = `${core.toLowerCase()}°`
+            break
+          case "augmented":
+            romanChord = `${core.toUpperCase()}+`
+            break
+          case "major7":
+            romanChord = `${core.toUpperCase()}maj7`
+            break
+          case "minor7":
+            romanChord = `${core.toLowerCase()}7`
+            break
+          case "dominant7":
+            romanChord = `${core.toUpperCase()}7`
+            break
+          case "diminished7":
+            romanChord = `${core.toLowerCase()}°7`
+            break
+          case "halfDiminished7":
+            romanChord = `${core.toLowerCase()}ø7`
+            break
+          case "major9":
+            romanChord = `${core.toUpperCase()}maj9`
+            break
+          case "minor9":
+            romanChord = `${core.toLowerCase()}m9`
+            break
+          case "dominant9":
+            romanChord = `${core.toUpperCase()}9`
+            break
+          case "major11":
+            romanChord = `${core.toUpperCase()}maj11`
+            break
+          case "minor11":
+            romanChord = `${core.toLowerCase()}m11`
+            break
+          default:
+            romanChord = core
         }
 
         if (!romanOptions.includes(romanChord)) {
           romanOptions.push(romanChord)
 
-          // Add inversion options if enabled
           if (showInversions) {
             for (let inv = 1; inv <= difficultyLevel.maxInversion; inv++) {
               const inversionSuffix = inv === 1 ? "/1st" : inv === 2 ? "/2nd" : inv === 3 ? "/3rd" : `/${inv}th`
