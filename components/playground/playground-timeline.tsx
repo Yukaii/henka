@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "@/hooks/use-translations"
 import {
@@ -20,6 +21,7 @@ interface PlaygroundTimelineProps {
   onAdd: () => void
   onRemove: (index: number) => void
   onMove: (index: number, direction: "left" | "right") => void
+  onReorder: (fromIndex: number, toIndex: number) => void
 }
 
 export function PlaygroundTimeline({
@@ -32,9 +34,17 @@ export function PlaygroundTimeline({
   onAdd,
   onRemove,
   onMove,
+  onReorder,
 }: PlaygroundTimelineProps) {
   const t = useTranslations()
   const isSingleSlot = slots.length <= 1
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  const resetDragState = () => {
+    setDraggingIndex(null)
+    setDragOverIndex(null)
+  }
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -46,10 +56,19 @@ export function PlaygroundTimeline({
           <Plus className="mr-2 h-4 w-4" /> {t.playground?.addSlot ?? "Add Slot"}
         </Button>
       </div>
-      <div className="flex gap-3 overflow-x-auto py-2 px-2 sm:py-3 sm:px-3">
+      <div
+        className="flex gap-3 overflow-x-auto py-2 px-2 sm:py-3 sm:px-3"
+        onDragOver={(event) => {
+          if (draggingIndex !== null) {
+            event.preventDefault()
+          }
+        }}
+      >
         {slots.map((slot, index) => {
           const isSelected = index === selectedIndex
           const isActive = index === activeIndex
+          const isDragging = index === draggingIndex
+          const isDragOver = index === dragOverIndex && draggingIndex !== null && draggingIndex !== index
           const label = slot.selection
             ? mode === "transpose"
               ? formatRomanLabel(slot.selection, keySignature)
@@ -66,7 +85,35 @@ export function PlaygroundTimeline({
               key={slot.id}
               className={`flex w-40 min-w-[10rem] flex-col rounded-lg border bg-muted/20 p-2 transition-all sm:w-48 sm:min-w-[12rem] sm:p-3 ${
                 isSelected ? "ring-2 ring-primary" : "border-border/60"
-              } ${isActive ? "border-primary" : ""}`}
+              } ${isActive ? "border-primary" : ""} ${isDragging ? "opacity-60" : ""} ${
+                isDragOver ? "ring-2 ring-primary/60" : ""
+              }`}
+              draggable
+              onDragStart={(event) => {
+                setDraggingIndex(index)
+                setDragOverIndex(index)
+                event.dataTransfer.effectAllowed = "move"
+                event.dataTransfer.setData("text/plain", String(index))
+              }}
+              onDragEnter={(event) => {
+                event.preventDefault()
+                if (draggingIndex === null || draggingIndex === index) return
+                setDragOverIndex(index)
+              }}
+              onDragOver={(event) => {
+                if (draggingIndex === null || draggingIndex === index) return
+                event.preventDefault()
+                setDragOverIndex(index)
+              }}
+              onDrop={(event) => {
+                if (draggingIndex === null) return
+                event.preventDefault()
+                if (draggingIndex !== index) {
+                  onReorder(draggingIndex, index)
+                }
+                resetDragState()
+              }}
+              onDragEnd={resetDragState}
             >
               <button
                 type="button"
@@ -123,6 +170,30 @@ export function PlaygroundTimeline({
             </div>
           )
         })}
+        <div
+          className={`flex h-full w-6 flex-shrink-0 items-stretch justify-center rounded-lg border border-dashed border-transparent transition-all ${
+            dragOverIndex === slots.length ? "border-primary/60" : ""
+          }`}
+          onDragEnter={(event) => {
+            if (draggingIndex === null) return
+            event.preventDefault()
+            setDragOverIndex(slots.length)
+          }}
+          onDragOver={(event) => {
+            if (draggingIndex === null) return
+            event.preventDefault()
+            setDragOverIndex(slots.length)
+          }}
+          onDrop={(event) => {
+            if (draggingIndex === null) return
+            event.preventDefault()
+            if (draggingIndex !== slots.length - 1) {
+              onReorder(draggingIndex, slots.length - 1)
+            }
+            resetDragState()
+          }}
+          onDragEnd={resetDragState}
+        />
       </div>
     </div>
   )

@@ -84,6 +84,7 @@ export function PlaygroundView() {
   const [tempo, setTempo] = useState<number>(DEFAULT_PLAYGROUND_TEMPO)
   const [controlsOpen, setControlsOpen] = useState(false)
   const [voiceLeadingEnabled, setVoiceLeadingEnabled] = useState<boolean>(voiceLeading)
+  const [isStateHydrated, setIsStateHydrated] = useState(false)
 
   const audioEngineRef = useRef(new AudioEngine())
   const chordGeneratorRef = useRef(new ChordGenerator())
@@ -97,7 +98,10 @@ export function PlaygroundView() {
     [setVoiceLeading],
   )
 
-  const getChordDuration = useCallback(() => Math.max(0.6, 240 / Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo))), [tempo])
+  const getChordDuration = useCallback(
+    () => Math.max(0.3, 60 / Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo))),
+    [tempo],
+  )
 
   useEffect(() => {
     slotsRef.current = slots
@@ -129,6 +133,8 @@ export function PlaygroundView() {
     const storedSaves = ensureSaveSlots(loadSavedSets())
     setSavedSets(storedSaves)
 
+    setIsStateHydrated(true)
+
     return () => {
       engine.dispose()
     }
@@ -139,6 +145,7 @@ export function PlaygroundView() {
   }, [instrument])
 
   useEffect(() => {
+    if (!isStateHydrated) return
     savePlaygroundState({
       mode,
       key: keySignature,
@@ -146,7 +153,7 @@ export function PlaygroundView() {
       tempo,
       voiceLeading: voiceLeadingEnabled,
     })
-  }, [keySignature, mode, slots, tempo, voiceLeadingEnabled])
+  }, [isStateHydrated, keySignature, mode, slots, tempo, voiceLeadingEnabled])
 
   useEffect(() => {
     saveSavedSets(savedSets)
@@ -166,7 +173,7 @@ export function PlaygroundView() {
       const chord = createChord(chordGeneratorRef.current, selection, {
         voiceLeading: voiceLeadingEnabled,
       })
-      const previewDuration = Math.min(3.5, Math.max(1, getChordDuration()))
+      const previewDuration = Math.min(3.5, Math.max(0.8, getChordDuration()))
       void audioEngineRef.current.playChord(chord, previewDuration)
     },
     [getChordDuration, isLooping, voiceLeadingEnabled],
@@ -231,6 +238,52 @@ export function PlaygroundView() {
       return prevIndex
     })
   }, [slots.length])
+
+  const handleReorderSlot = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return
+
+      setSlots((prev) => {
+        if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length) {
+          return prev
+        }
+        const next = [...prev]
+        const [moved] = next.splice(fromIndex, 1)
+        next.splice(toIndex, 0, moved)
+        return next
+      })
+
+      const lastIndex = Math.max(0, slots.length - 1)
+
+      setSelectedIndex((prevIndex) => {
+        if (prevIndex === fromIndex) {
+          return toIndex
+        }
+        if (fromIndex < prevIndex && toIndex >= prevIndex) {
+          return Math.max(0, prevIndex - 1)
+        }
+        if (fromIndex > prevIndex && toIndex <= prevIndex) {
+          return Math.min(prevIndex + 1, lastIndex)
+        }
+        return prevIndex
+      })
+
+      setActiveIndex((prevActive) => {
+        if (prevActive === null) return null
+        if (prevActive === fromIndex) {
+          return toIndex
+        }
+        if (fromIndex < prevActive && toIndex >= prevActive) {
+          return Math.max(0, prevActive - 1)
+        }
+        if (fromIndex > prevActive && toIndex <= prevActive) {
+          return Math.min(prevActive + 1, lastIndex)
+        }
+        return prevActive
+      })
+    },
+    [slots.length],
+  )
 
   const handleSelectSlot = useCallback((index: number) => {
     setSelectedIndex(index)
@@ -522,6 +575,7 @@ export function PlaygroundView() {
         onAdd={handleAddSlot}
         onRemove={handleRemoveSlot}
         onMove={handleMoveSlot}
+        onReorder={handleReorderSlot}
       />
 
       <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-6">
