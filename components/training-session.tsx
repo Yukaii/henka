@@ -35,6 +35,7 @@ export function TrainingSession({
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
+  const [completedSession, setCompletedSession] = useState<GameSession | null>(null)
   const { voiceLeading } = useSettings()
   const t = useTranslations()
 
@@ -42,6 +43,7 @@ export function TrainingSession({
     const questionCount = questionSet?.questions.length || 10
     const newSession = gameManager.createSession(mode, difficulty, questionCount)
 
+    setCompletedSession(null)
     if (questionSet) {
       questionSet.questions.forEach((q) => gameManager.addQuestion(q))
       setCurrentQuestion(questionSet.questions[0])
@@ -83,11 +85,14 @@ export function TrainingSession({
     setShowResult(false)
 
     if (gameManager.isSessionComplete()) {
-      setIsComplete(true)
-      const completedSession = gameManager.completeSession()
-      if (completedSession && onSessionComplete) {
-        onSessionComplete(completedSession)
+      const finishedSession = gameManager.completeSession()
+      if (finishedSession) {
+        setCompletedSession(finishedSession)
+        if (onSessionComplete) {
+          onSessionComplete(finishedSession)
+        }
       }
+      setIsComplete(true)
       return
     }
 
@@ -110,6 +115,7 @@ export function TrainingSession({
   const handleRestart = () => {
     setIsComplete(false)
     setShowResult(false)
+    setCompletedSession(null)
     initializeSession()
   }
 
@@ -124,10 +130,9 @@ export function TrainingSession({
   }
 
   if (isComplete) {
-    const completedSession = gameManager.getCurrentSession()
     return (
       <SessionResults
-        session={completedSession}
+        session={completedSession ?? session}
         onRestart={handleRestart}
         onExit={onExit}
         mode={mode}

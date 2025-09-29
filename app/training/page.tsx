@@ -51,8 +51,9 @@ function TrainingPageContent() {
   const difficulty: string = isValidDifficulty(difficultyParam) ? difficultyParam : DEFAULT_DIFFICULTY
 
   const handleExit = useCallback(() => {
-    router.push("/")
-  }, [router])
+    const params = new URLSearchParams({ mode, difficulty })
+    router.push(`/?${params.toString()}`)
+  }, [difficulty, mode, router])
 
   const handleSessionComplete = useCallback(
     (session: GameSession) => {

@@ -19,6 +19,15 @@ import { useSettings } from "@/components/settings-provider"
 import { formatChordFamilies, formatChordPhrases, formatInversionSummary, formatKeys } from "@/lib/i18n"
 
 type AppView = "menu" | "setup" | "progress"
+type DifficultyKey = keyof typeof DIFFICULTY_LEVELS
+
+const MODE_STORAGE_KEY = "henka::selectedMode"
+const DIFFICULTY_STORAGE_KEY = "henka::selectedDifficulty"
+
+const isValidMode = (value: string | null): value is GameMode => value === "absolute" || value === "transpose"
+
+const isValidDifficulty = (value: string | null): value is DifficultyKey =>
+  value !== null && Object.prototype.hasOwnProperty.call(DIFFICULTY_LEVELS, value)
 
 export default function ChordTrainerApp() {
   const router = useRouter()
@@ -39,6 +48,41 @@ export default function ChordTrainerApp() {
     }
     setIsReady(true)
   }, [router])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const params = new URLSearchParams(window.location.search)
+    const modeParam = params.get("mode")
+    if (isValidMode(modeParam)) {
+      setSelectedMode(modeParam)
+    } else {
+      const storedMode = window.localStorage.getItem(MODE_STORAGE_KEY)
+      if (isValidMode(storedMode)) {
+        setSelectedMode(storedMode)
+      }
+    }
+
+    const difficultyParam = params.get("difficulty")
+    if (isValidDifficulty(difficultyParam)) {
+      setSelectedDifficulty(difficultyParam)
+    } else {
+      const storedDifficulty = window.localStorage.getItem(DIFFICULTY_STORAGE_KEY)
+      if (isValidDifficulty(storedDifficulty)) {
+        setSelectedDifficulty(storedDifficulty)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(MODE_STORAGE_KEY, selectedMode)
+  }, [selectedMode])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(DIFFICULTY_STORAGE_KEY, selectedDifficulty)
+  }, [selectedDifficulty])
 
   const handleStartTraining = () => {
     const params = new URLSearchParams({ mode: selectedMode, difficulty: selectedDifficulty })
