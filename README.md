@@ -7,7 +7,7 @@ Henka is an interactive ear-training companion that helps musicians internalize 
 
 ## Core Features
 - Dual training modes for Roman numerals (`Transpose`) and absolute chord names (`Absolute`).
-- Layered difficulty levels plus a customizable tier for building progression mixes with extended harmony, inversion, and voice-leading controls.
+- Layered difficulty levels plus a customizable tier for building progression mixes with extended harmony, inversion, altered degrees (e.g., bII, bV), and voice-leading controls.
 - Real-time Web Audio engine with switchable sampled instruments and optional smoothing between chords.
 - Progress dashboard that tracks accuracy, streaks, achievements, and recent trends across sessions.
 - Customisable practice settings covering language (English, Japanese, Traditional Chinese), instrument choice, debug helpers, and question sets.

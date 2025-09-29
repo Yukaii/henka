@@ -215,8 +215,14 @@ export class QuestionGenerator {
   }
 
   private normalizeRomanNumeral(roman: string): string {
-    return roman
-      .replace(/\s+/g, "")
+    const trimmed = roman.replace(/\s+/g, "")
+    const match = trimmed.match(/^(?<leading>[b#]+)?(?<core>[ivxIVX]+)(?<trailing>[b#]+)?(?<rest>.*)$/)
+
+    const canonical = match
+      ? `${(match.groups?.leading ?? "") + (match.groups?.trailing ?? "")}${match.groups?.core ?? ""}${match.groups?.rest ?? ""}`
+      : trimmed
+
+    return canonical
       .replace("maj7", "M7")
       .replace("min7", "m7")
       .replace("dom7", "7")

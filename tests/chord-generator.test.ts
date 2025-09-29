@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
 import { ChordGenerator, getCustomDifficultySettings, updateCustomDifficultySettings } from "../lib/chord-generator"
+import { QuestionGenerator } from "../lib/question-generator"
+import type { Question } from "../lib/game-modes"
 
 describe("ChordGenerator Roman numeral mapping", () => {
   it("distinguishes between I and IV chords in G major", () => {
@@ -99,5 +101,32 @@ describe("ChordGenerator Roman numeral mapping", () => {
     assert.equal(progression.chords.length, 2)
     assert.equal(progression.chords[0].name.toLowerCase().includes("augmented"), true)
     assert.equal(progression.chords[1].name.toLowerCase().includes("minor11"), true)
+  })
+
+  it("handles borrowed flat degrees with both prefix and suffix notation", () => {
+    const generator = new ChordGenerator()
+    const progression = generator.generateProgressionFromRoman(["bII", "IIb", "bV"], "C")
+
+    assert.equal(progression.chords.length, 3)
+    assert.equal(progression.chords[0].name.startsWith("C#"), true)
+    assert.equal(progression.chords[1].name.startsWith("C#"), true)
+    assert.equal(progression.chords[2].name.startsWith("F#"), true)
+    assert.equal(progression.chords[0].romanNumeral, "bII")
+    assert.equal(progression.chords[1].romanNumeral, "IIb")
+    assert.equal(progression.chords[2].romanNumeral, "bV")
+  })
+
+  it("treats IIb and bII answers as equivalent in transpose mode", () => {
+    const chordGenerator = new ChordGenerator()
+    const progression = chordGenerator.generateProgressionFromRoman(["bII"], "C")
+    const question: Question = {
+      id: "q-borrowed",
+      progression,
+      correctAnswer: ["bII"],
+    }
+
+    const questionGenerator = new QuestionGenerator()
+    const isCorrect = questionGenerator.validateAnswer(question, ["IIb"], "transpose")
+    assert.equal(isCorrect, true)
   })
 })

@@ -68,59 +68,88 @@ export function ChordSelector({ value, onChange, mode, difficulty, disabled, pla
     const romanOptions: string[] = []
 
     // Generate Roman numerals based on difficulty
-    const baseRomanNumerals = ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
+    const baseRomanNumerals = [
+      "I",
+      "ii",
+      "iii",
+      "IV",
+      "V",
+      "vi",
+      "vii°",
+      "bII",
+      "bIII",
+      "bV",
+      "bVI",
+      "bVII",
+      "IIb",
+      "Vb",
+      "#IV",
+      "#V",
+    ]
 
     baseRomanNumerals.forEach((roman) => {
-      const core = roman.replace(/[°]/g, "")
+      const match = roman.match(/^(?<leading>[b#]+)?(?<letters>[ivxIVX]+)(?<trailing>[b#]+)?(?<rest>.*)$/)
+      const leading = match?.groups?.leading ?? ""
+      const trailing = match?.groups?.trailing ?? ""
+      const letters = match?.groups?.letters ?? roman
+      const rest = match?.groups?.rest ?? ""
+
+      const buildRoman = (targetCase: "upper" | "lower", quality: string) => {
+        const baseLetters = targetCase === "upper" ? letters.toUpperCase() : letters.toLowerCase()
+        if (!leading && trailing) {
+          return `${baseLetters}${trailing}${quality}`
+        }
+        return `${leading}${baseLetters}${quality}`
+      }
 
       difficultyLevel.chordTypes.forEach((chordType) => {
-        let romanChord = roman
+        let romanChord = buildRoman(letters === letters.toUpperCase() ? "upper" : "lower", rest)
 
         switch (chordType) {
           case "major":
-            romanChord = core.toUpperCase()
+            romanChord = buildRoman("upper", "")
             break
           case "minor":
-            romanChord = core.toLowerCase()
+            romanChord = buildRoman("lower", "")
             break
           case "diminished":
-            romanChord = `${core.toLowerCase()}°`
+            romanChord = buildRoman("lower", "°")
             break
           case "augmented":
-            romanChord = `${core.toUpperCase()}+`
+            romanChord = buildRoman("upper", "+")
             break
           case "major7":
-            romanChord = `${core.toUpperCase()}maj7`
+            romanChord = buildRoman("upper", "maj7")
             break
           case "minor7":
-            romanChord = `${core.toLowerCase()}7`
+            romanChord = buildRoman("lower", "7")
             break
           case "dominant7":
-            romanChord = `${core.toUpperCase()}7`
+            romanChord = buildRoman("upper", "7")
             break
           case "diminished7":
-            romanChord = `${core.toLowerCase()}°7`
+            romanChord = buildRoman("lower", "°7")
             break
           case "halfDiminished7":
-            romanChord = `${core.toLowerCase()}ø7`
+            romanChord = buildRoman("lower", "ø7")
             break
           case "major9":
-            romanChord = `${core.toUpperCase()}maj9`
+            romanChord = buildRoman("upper", "maj9")
             break
           case "minor9":
-            romanChord = `${core.toLowerCase()}m9`
+            romanChord = buildRoman("lower", "9")
             break
           case "dominant9":
-            romanChord = `${core.toUpperCase()}9`
+            romanChord = buildRoman("upper", "9")
             break
           case "major11":
-            romanChord = `${core.toUpperCase()}maj11`
+            romanChord = buildRoman("upper", "maj11")
             break
           case "minor11":
-            romanChord = `${core.toLowerCase()}m11`
+            romanChord = buildRoman("lower", "m11")
             break
           default:
-            romanChord = core
+            break
         }
 
         if (!romanOptions.includes(romanChord)) {

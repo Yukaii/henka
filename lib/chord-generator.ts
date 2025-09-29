@@ -58,7 +58,24 @@ export interface CustomDifficultySettings {
   useVoiceLeading: boolean
 }
 
-const CUSTOM_TEMPLATE_BASE = ["I", "vi", "IV", "V", "ii", "iii", "vii°"]
+const CUSTOM_TEMPLATE_BASE = [
+  "I",
+  "vi",
+  "IV",
+  "V",
+  "ii",
+  "iii",
+  "vii°",
+  "bII",
+  "bIII",
+  "bV",
+  "bVI",
+  "bVII",
+  "IIb",
+  "Vb",
+  "#IV",
+  "#V",
+]
 
 const ALL_CHORD_TYPES = [
   "major",
@@ -244,30 +261,63 @@ export class ChordGenerator {
     return 60 + keyIndex // C4 = 60
   }
 
-  private romanToChordType(roman: string): string {
-    const baseRoman = roman.split("/")[0]
-    if (baseRoman.includes("maj11")) return "major11"
-    if (baseRoman.includes("11")) return baseRoman.includes("m") ? "minor11" : "major11"
-    if (baseRoman.includes("maj9")) return "major9"
-    if (baseRoman.includes("maj7")) return "major7"
-    if (baseRoman.includes("+")) return "augmented"
-    if (baseRoman.includes("9")) return baseRoman.includes("m") ? "minor9" : "dominant9"
-    if (baseRoman.includes("7")) {
-      if (baseRoman.includes("°")) return "diminished7"
-      if (baseRoman.includes("ø")) return "halfDiminished7"
-      return baseRoman === baseRoman.toUpperCase() ? "dominant7" : "minor7"
-    }
-    if (baseRoman.includes("°")) return "diminished"
-    return baseRoman === baseRoman.toUpperCase() ? "major" : "minor"
+  private extractRomanCore(baseRoman: string): {
+    leading: string
+    trailing: string
+    letters: string
+    remainder: string
+  } {
+    const leadingMatch = baseRoman.match(/^[b#]+/)
+    const trailingMatch = baseRoman.match(/[b#]+$/)
+    const leading = leadingMatch?.[0] ?? ""
+    const trailing = trailingMatch?.[0] ?? ""
+    const start = leading.length
+    const end = baseRoman.length - trailing.length
+    const middle = baseRoman.slice(start, end)
+    const letterMatch = middle.match(/[ivxIVX]+/)
+    const letters = letterMatch?.[0] ?? middle
+    const remainder = middle.slice(letters.length)
+    return { leading, trailing, letters, remainder }
   }
 
-  private romanToDegree(roman: string): number {
-    const cleanRoman = roman
-      .replace(/maj/gi, "")
-      .replace(/m(?=\d)/g, "")
-      .replace(/[°ø+]/g, "")
-      .replace(/\d/g, "")
-      .split("/")[0]
+  private romanToChordType(roman: string): string {
+    const baseToken = roman.split("/")[0]
+    const { leading, trailing, letters, remainder } = this.extractRomanCore(baseToken)
+    const sanitized = `${letters}${remainder}`
+
+    if (sanitized.includes("maj11")) return "major11"
+    if (sanitized.includes("m11")) return "minor11"
+    if (sanitized.includes("maj9")) return "major9"
+    if (sanitized.includes("maj7")) return "major7"
+    if (sanitized.includes("m9")) return "minor9"
+    if (sanitized.includes("+")) return "augmented"
+    if (sanitized.includes("m7b5") || sanitized.includes("ø7")) return "halfDiminished7"
+    if (sanitized.includes("°7")) return "diminished7"
+    if (sanitized.includes("m7")) return "minor7"
+    if (sanitized.includes("11")) {
+      return letters === letters.toUpperCase() ? "major11" : "minor11"
+    }
+    if (sanitized.includes("9")) {
+      if (sanitized.includes("maj")) return "major9"
+      return letters === letters.toLowerCase() ? "minor9" : "dominant9"
+    }
+    if (sanitized.includes("7")) {
+      if (sanitized.includes("°")) return "diminished7"
+      if (sanitized.includes("ø")) return "halfDiminished7"
+      return letters === letters.toUpperCase() ? "dominant7" : "minor7"
+    }
+    if (sanitized.includes("°") || remainder.includes("°")) return "diminished"
+    if (sanitized.includes("ø")) return "halfDiminished7"
+    if (leading.includes("#") || trailing.includes("#")) {
+      return letters === letters.toUpperCase() ? "major" : "minor"
+    }
+    return letters === letters.toUpperCase() ? "major" : "minor"
+  }
+
+  private romanToDegree(roman: string): { degree: number; accidentalShift: number } {
+    const baseToken = roman.split("/")[0]
+    const { leading, trailing, letters } = this.extractRomanCore(baseToken)
+    const core = letters.toUpperCase()
     const romanMap: Record<string, number> = {
       I: 0,
       II: 1,
@@ -277,11 +327,19 @@ export class ChordGenerator {
       VI: 5,
       VII: 6,
     }
-    const degree = romanMap[cleanRoman.toUpperCase()]
+    const degree = romanMap[core]
     if (degree === undefined) {
       throw new Error(`Unknown Roman numeral: ${roman}`)
     }
-    return degree
+
+    const accidentalChars = `${leading}${trailing}`
+    const accidentalShift = [...accidentalChars].reduce((total, symbol) => {
+      if (symbol === "#") return total + 1
+      if (symbol === "b") return total - 1
+      return total
+    }, 0)
+
+    return { degree, accidentalShift }
   }
 
   private applyInversion(notes: number[], inversion: number): number[] {
@@ -428,40 +486,80 @@ export class ChordGenerator {
   }
 
   private formatRomanForChordType(baseRoman: string, chordType: string): string {
-    const core = baseRoman.replace(/[°ø]/g, "")
+    const { leading, trailing, letters, remainder } = this.extractRomanCore(baseRoman)
+
+    let targetCase: "upper" | "lower" = letters === letters.toUpperCase() ? "upper" : "lower"
+    let qualitySuffix = remainder
 
     switch (chordType) {
       case "major":
-        return core.toUpperCase()
+        targetCase = "upper"
+        qualitySuffix = ""
+        break
       case "minor":
-        return core.toLowerCase()
+        targetCase = "lower"
+        qualitySuffix = ""
+        break
       case "diminished":
-        return `${core.toLowerCase()}°`
+        targetCase = "lower"
+        qualitySuffix = "°"
+        break
       case "augmented":
-        return `${core.toUpperCase()}+`
+        targetCase = "upper"
+        qualitySuffix = "+"
+        break
       case "major7":
-        return `${core.toUpperCase()}maj7`
+        targetCase = "upper"
+        qualitySuffix = "maj7"
+        break
       case "minor7":
-        return `${core.toLowerCase()}7`
+        targetCase = "lower"
+        qualitySuffix = "7"
+        break
       case "dominant7":
-        return `${core.toUpperCase()}7`
+        targetCase = "upper"
+        qualitySuffix = "7"
+        break
       case "diminished7":
-        return `${core.toLowerCase()}°7`
+        targetCase = "lower"
+        qualitySuffix = "°7"
+        break
       case "halfDiminished7":
-        return `${core.toLowerCase()}ø7`
+        targetCase = "lower"
+        qualitySuffix = "ø7"
+        break
       case "major9":
-        return `${core.toUpperCase()}maj9`
+        targetCase = "upper"
+        qualitySuffix = "maj9"
+        break
       case "minor9":
-        return `${core.toLowerCase()}m9`
+        targetCase = "lower"
+        qualitySuffix = "9"
+        break
       case "dominant9":
-        return `${core.toUpperCase()}9`
+        targetCase = "upper"
+        qualitySuffix = "9"
+        break
       case "major11":
-        return `${core.toUpperCase()}maj11`
+        targetCase = "upper"
+        qualitySuffix = "maj11"
+        break
       case "minor11":
-        return `${core.toLowerCase()}m11`
+        targetCase = "lower"
+        qualitySuffix = "m11"
+        break
       default:
-        return core
+        break
     }
+
+    const romanCore = targetCase === "upper" ? letters.toUpperCase() : letters.toLowerCase()
+    const accidentals = `${leading}${trailing}`
+
+    if (!leading && trailing) {
+      return `${romanCore}${trailing}${qualitySuffix}`
+    }
+
+    return `${accidentals}${romanCore}${qualitySuffix}`
   }
 
   private generateCustomProgressionTemplate(level: DifficultyLevel): string[] {
@@ -521,10 +619,10 @@ export class ChordGenerator {
     let previousChord: Chord | null = null
 
     const chords = romanProgression.map((roman) => {
-      const degree = this.romanToDegree(roman)
+      const { degree, accidentalShift } = this.romanToDegree(roman)
       const chordType = this.romanToChordType(roman)
-      const rootInterval = scale[degree]
-      const rootNote = KEYS[(keyIndex + rootInterval) % 12]
+      const rootInterval = scale[degree] + accidentalShift
+      const rootNote = KEYS[(keyIndex + ((rootInterval % 12) + 12)) % 12]
 
       const intervals = CHORD_TYPES[chordType as keyof typeof CHORD_TYPES]
       if (!intervals) {
