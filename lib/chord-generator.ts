@@ -601,6 +601,38 @@ export class ChordGenerator {
     }
   }
 
+  generateChordWithVoiceLeading(
+    root: string,
+    chordType: string,
+    previousChord: Chord | null,
+    options: { preferredOctave?: number; maxInversion?: number; forcedInversion?: number } = {},
+  ): Chord {
+    const intervals = CHORD_TYPES[chordType as keyof typeof CHORD_TYPES]
+    if (!intervals) {
+      return this.generateChord(root, chordType, options.preferredOctave ?? 4)
+    }
+
+    const maxAvailableInversion = intervals.length - 1
+    const targetMaxInversion = Math.min(options.maxInversion ?? maxAvailableInversion, maxAvailableInversion)
+
+    const { inversion, octave } = this.findBestVoiceLeadingConfiguration(
+      previousChord,
+      root,
+      chordType,
+      targetMaxInversion,
+      options.forcedInversion,
+    )
+
+    const resolvedOctave = options.preferredOctave ?? octave
+    const chord = this.generateChord(root, chordType, resolvedOctave, inversion)
+
+    if (previousChord) {
+      chord.notes = this.adjustNotesForVoiceLeading(previousChord.notes, chord.notes)
+    }
+
+    return chord
+  }
+
   generateProgressionFromRoman(
     romanProgression: string[],
     key: string,

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { PlaygroundWheel } from "@/components/playground/playground-wheel"
 import { PlaygroundTimeline } from "@/components/playground/playground-timeline"
 import {
@@ -28,7 +29,7 @@ import {
   type PlaygroundSaveSlot,
   type PlaygroundSlot,
 } from "@/lib/playground"
-import { AudioEngine } from "@/lib/audio-engine"
+import { AudioEngine, type Chord } from "@/lib/audio-engine"
 import { ChordGenerator } from "@/lib/chord-generator"
 import { useSettings } from "@/components/settings-provider"
 import { useTranslations } from "@/hooks/use-translations"
@@ -72,7 +73,7 @@ function formatTimestamp(value: number, locale: string): string {
 
 export function PlaygroundView() {
   const t = useTranslations()
-  const { instrument, language } = useSettings()
+  const { instrument, language, voiceLeading, setVoiceLeading } = useSettings()
   const [mode, setMode] = useState<PlaygroundMode>(DEFAULT_PLAYGROUND_MODE)
   const [keySignature, setKeySignature] = useState<string>(DEFAULT_PLAYGROUND_KEY)
   const [slots, setSlots] = useState<PlaygroundSlot[]>(() => clampSlots([createEmptySlot(), createEmptySlot()]))
@@ -82,11 +83,19 @@ export function PlaygroundView() {
   const [savedSets, setSavedSets] = useState<PlaygroundSaveSlot[]>([])
   const [tempo, setTempo] = useState<number>(DEFAULT_PLAYGROUND_TEMPO)
   const [controlsOpen, setControlsOpen] = useState(false)
+  const [voiceLeadingEnabled, setVoiceLeadingEnabled] = useState<boolean>(voiceLeading)
 
   const audioEngineRef = useRef(new AudioEngine())
   const chordGeneratorRef = useRef(new ChordGenerator())
   const slotsRef = useRef<PlaygroundSlot[]>(slots)
   const selectedIndexRef = useRef(selectedIndex)
+  const handleVoiceLeadingChange = useCallback(
+    (value: boolean) => {
+      setVoiceLeadingEnabled(value)
+      setVoiceLeading(value)
+    },
+    [setVoiceLeading],
+  )
 
   const getChordDuration = useCallback(() => Math.max(0.6, 240 / Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo))), [tempo])
 
@@ -99,6 +108,10 @@ export function PlaygroundView() {
   }, [selectedIndex])
 
   useEffect(() => {
+    setVoiceLeadingEnabled(voiceLeading)
+  }, [voiceLeading])
+
+  useEffect(() => {
     const engine = audioEngineRef.current
     const storedState = loadPlaygroundState()
     if (storedState) {
@@ -107,6 +120,9 @@ export function PlaygroundView() {
       const restoredSlots = clampSlots(createSlotsFromSnapshot(storedState.slots))
       setSlots(restoredSlots)
       setTempo(storedState.tempo ?? DEFAULT_PLAYGROUND_TEMPO)
+      if (typeof storedState.voiceLeading === "boolean") {
+        handleVoiceLeadingChange(storedState.voiceLeading)
+      }
       setSelectedIndex(0)
     }
 
@@ -116,7 +132,7 @@ export function PlaygroundView() {
     return () => {
       engine.dispose()
     }
-  }, [])
+  }, [handleVoiceLeadingChange])
 
   useEffect(() => {
     audioEngineRef.current.setInstrument(instrument)
@@ -128,8 +144,9 @@ export function PlaygroundView() {
       key: keySignature,
       slots: serializeSlots(slots),
       tempo,
+      voiceLeading: voiceLeadingEnabled,
     })
-  }, [mode, keySignature, slots, tempo])
+  }, [keySignature, mode, slots, tempo, voiceLeadingEnabled])
 
   useEffect(() => {
     saveSavedSets(savedSets)
@@ -146,11 +163,13 @@ export function PlaygroundView() {
         setIsLooping(false)
       }
 
-      const chord = createChord(chordGeneratorRef.current, selection)
+      const chord = createChord(chordGeneratorRef.current, selection, {
+        voiceLeading: voiceLeadingEnabled,
+      })
       const previewDuration = Math.min(3.5, Math.max(1, getChordDuration()))
       void audioEngineRef.current.playChord(chord, previewDuration)
     },
-    [getChordDuration, isLooping],
+    [getChordDuration, isLooping, voiceLeadingEnabled],
   )
 
   const handleCommit = useCallback((selection: PlaygroundChordSelection) => {
@@ -227,28 +246,38 @@ export function PlaygroundView() {
     let cancelled = false
     const engine = audioEngineRef.current
     const generator = chordGeneratorRef.current
+    let carriedChord: Chord | null = null
 
     const playLoop = async () => {
       while (!cancelled) {
         const filledSlots = slotsRef.current.filter((slot) => slot.selection)
         if (!filledSlots.length) {
+          carriedChord = null
           await new Promise((resolve) => setTimeout(resolve, 400))
           continue
         }
+
+        let previousChord: Chord | null = voiceLeadingEnabled ? carriedChord : null
 
         for (const slot of filledSlots) {
           if (cancelled) break
           const selection = slot.selection!
           const visualIndex = slotsRef.current.findIndex((current) => current.id === slot.id)
           setActiveIndex(visualIndex >= 0 ? visualIndex : null)
-          const chord = createChord(generator, selection)
+          const chord = createChord(generator, selection, {
+            voiceLeading: voiceLeadingEnabled,
+            previous: voiceLeadingEnabled ? previousChord : null,
+          })
           const duration = getChordDuration()
           try {
             await engine.playChord(chord, duration)
           } catch (error) {
             console.error("Playground loop error", error)
           }
+          previousChord = voiceLeadingEnabled ? chord : null
         }
+
+        carriedChord = voiceLeadingEnabled ? previousChord : null
       }
     }
 
@@ -258,7 +287,7 @@ export function PlaygroundView() {
       cancelled = true
       engine.stop(true)
     }
-  }, [getChordDuration, isLooping])
+  }, [getChordDuration, isLooping, voiceLeadingEnabled])
 
   const handleToggleLoop = useCallback(() => {
     setIsLooping((prev) => !prev)
@@ -390,11 +419,32 @@ export function PlaygroundView() {
     </div>
   )
 
+  const voiceLeadingControls = (
+    <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2.5 sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="space-y-1">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t.playground?.voiceLeadingLabel ?? "Auto Voice Leading"}
+          </span>
+          <p className="text-xs text-muted-foreground">
+            {t.playground?.voiceLeadingHint ?? "Smooth transitions by revoicing chords automatically."}
+          </p>
+        </div>
+        <Switch
+          checked={voiceLeadingEnabled}
+          onCheckedChange={handleVoiceLeadingChange}
+          aria-label={t.playground?.voiceLeadingLabel ?? "Auto Voice Leading"}
+        />
+      </div>
+    </div>
+  )
+
   const controlPanel = (
     <div className="space-y-5">
       {modeControls}
       {keyControls}
       {tempoControls}
+      {voiceLeadingControls}
     </div>
   )
 
@@ -446,10 +496,11 @@ export function PlaygroundView() {
           </div>
         </div>
 
-        <div className="hidden md:grid md:grid-cols-3 md:gap-6">
+        <div className="hidden md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-4">
           {modeControls}
           {keyControls}
           {tempoControls}
+          {voiceLeadingControls}
         </div>
       </div>
 

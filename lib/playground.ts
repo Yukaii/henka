@@ -39,6 +39,7 @@ export interface PlaygroundStateSnapshot {
   key: string
   slots: PlaygroundSlotSnapshot[]
   tempo?: number
+  voiceLeading?: boolean
 }
 
 export const PLAYGROUND_STATE_STORAGE_KEY = "henka::playground::state"
@@ -254,11 +255,41 @@ export function formatRomanLabel(selection: PlaygroundChordSelection, key: strin
   return formatRomanForChordType(baseRoman, selection.chordType)
 }
 
+interface PlaygroundChordOptions {
+  previous?: Chord | null
+  voiceLeading?: boolean
+  octave?: number
+}
+
 export function createChord(
   generator: ChordGenerator,
   selection: PlaygroundChordSelection,
-  octave = 4,
+  options: PlaygroundChordOptions = {},
 ): Chord {
+  const { previous = null, voiceLeading = false, octave = 4 } = options
+
+  if (voiceLeading && typeof (generator as ChordGenerator & {
+    generateChordWithVoiceLeading?: (
+      root: string,
+      chordType: string,
+      previousChord: Chord | null,
+      config?: { preferredOctave?: number }
+    ) => Chord
+  }).generateChordWithVoiceLeading === "function") {
+    const extendedGenerator = generator as ChordGenerator & {
+      generateChordWithVoiceLeading: (
+        root: string,
+        chordType: string,
+        previousChord: Chord | null,
+        config?: { preferredOctave?: number }
+      ) => Chord
+    }
+
+    return extendedGenerator.generateChordWithVoiceLeading(selection.root, selection.chordType, previous, {
+      preferredOctave: octave,
+    })
+  }
+
   return generator.generateChord(selection.root, selection.chordType, octave)
 }
 

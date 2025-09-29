@@ -186,6 +186,8 @@ export const MESSAGES = {
       controlsButton: "Controls",
       tempoLabel: "Tempo",
       tempoHint: "Each chord holds for a full bar.",
+      voiceLeadingLabel: "Auto Voice Leading",
+      voiceLeadingHint: "Smooth transitions by revoicing chords automatically.",
     },
     sessionResults: {
       noData: "No session data available",
@@ -508,6 +510,8 @@ export const MESSAGES = {
       controlsButton: "コントロール",
       tempoLabel: "テンポ",
       tempoHint: "各コードは1小節分再生されます。",
+      voiceLeadingLabel: "自動ボイスリーディング",
+      voiceLeadingHint: "自動転回でコードの移行を滑らかにします。",
     },
     sessionResults: {
       noData: "セッションデータがありません",
@@ -829,6 +833,8 @@ export const MESSAGES = {
       controlsButton: "控制",
       tempoLabel: "速度",
       tempoHint: "每個和弦維持一個小節。",
+      voiceLeadingLabel: "自動聲部連接",
+      voiceLeadingHint: "自動轉位讓和弦銜接更平順。",
     },
     sessionResults: {
       noData: "沒有可用的訓練資料",
