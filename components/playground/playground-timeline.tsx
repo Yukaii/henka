@@ -37,7 +37,7 @@ export function PlaygroundTimeline({
   const isSingleSlot = slots.length <= 1
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           {t.playground?.sequenceHeading ?? "Chord Sequence"}
@@ -46,8 +46,7 @@ export function PlaygroundTimeline({
           <Plus className="mr-2 h-4 w-4" /> {t.playground?.addSlot ?? "Add Slot"}
         </Button>
       </div>
-
-      <div className="flex gap-3 overflow-x-auto pb-3 px-2 sm:px-3">
+      <div className="flex gap-3 overflow-x-auto py-2 px-2 sm:py-3 sm:px-3">
         {slots.map((slot, index) => {
           const isSelected = index === selectedIndex
           const isActive = index === activeIndex
@@ -65,7 +64,7 @@ export function PlaygroundTimeline({
           return (
             <div
               key={slot.id}
-              className={`flex w-40 min-w-[10rem] flex-col rounded-lg border bg-muted/20 p-2.5 transition-all sm:w-48 sm:min-w-[12rem] sm:p-3 ${
+              className={`flex w-40 min-w-[10rem] flex-col rounded-lg border bg-muted/20 p-2 transition-all sm:w-48 sm:min-w-[12rem] sm:p-3 ${
                 isSelected ? "ring-2 ring-primary" : "border-border/60"
               } ${isActive ? "border-primary" : ""}`}
             >
@@ -87,7 +86,7 @@ export function PlaygroundTimeline({
                 <span className="mt-1 text-xs text-muted-foreground">{secondary}</span>
               </button>
 
-              <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="mt-2.5 flex items-center justify-between gap-2 sm:mt-3">
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"

@@ -12,7 +12,7 @@ import { formatAbsoluteLabel, formatRomanLabel } from "@/lib/playground"
 
 const HOLD_DELAY = 130
 const ROOT_RING_PERCENT = 34
-const VARIATION_RING_PERCENT = 42
+const VARIATION_RING_PERCENT = 30
 
 interface PlaygroundWheelProps {
   mode: PlaygroundMode
@@ -190,7 +190,7 @@ export function PlaygroundWheel({
         {isOverlayOpen && activeState && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div
-              className="relative flex h-[62%] w-[62%] items-center justify-center rounded-full border border-primary/40 bg-background/95 shadow-xl sm:h-[64%] sm:w-[64%] lg:h-[66%] lg:w-[66%]"
+              className="relative flex h-[56%] w-[56%] items-center justify-center rounded-full border border-primary/40 bg-background/95 shadow-xl sm:h-[58%] sm:w-[58%] lg:h-[60%] lg:w-[60%]"
               onPointerLeave={() => {
                 setHoverVariation(null)
                 triggerPreview(activeState.variation)
@@ -198,7 +198,7 @@ export function PlaygroundWheel({
             >
               <button
                 type="button"
-                className={`flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 text-xs font-medium transition-colors sm:h-14 sm:w-14 sm:text-sm lg:h-16 lg:w-16 ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full border border-primary/40 text-xs font-medium transition-colors sm:h-12 sm:w-12 sm:text-sm lg:h-14 lg:w-14 ${
                   !hoverVariation ? "bg-primary/10 text-primary" : "bg-background"
                 }`}
                 onPointerEnter={() => {
@@ -228,7 +228,7 @@ export function PlaygroundWheel({
                     <button
                       key={variation.id}
                       type="button"
-                      className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 transform items-center justify-center rounded-full border text-[0.7rem] font-medium transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-12 sm:w-12 sm:text-xs lg:h-14 lg:w-14 lg:text-sm ${
+                      className={`absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 transform items-center justify-center rounded-full border text-[0.7rem] font-medium transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-10 sm:w-10 sm:text-xs lg:h-12 lg:w-12 lg:text-sm ${
                         isActive ? "border-primary text-primary shadow" : "border-border/60"
                       } ${matchesSelection ? "bg-primary/10" : "bg-background"}`}
                       style={{ left: `${x}%`, top: `${y}%` }}

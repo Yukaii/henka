@@ -400,9 +400,9 @@ export function PlaygroundView() {
 
   return (
     <>
-      <div className="space-y-8 sm:space-y-10">
-      <div className="space-y-6 rounded-2xl border border-border/60 bg-card/95 p-6 shadow-lg">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-6 sm:space-y-10">
+      <div className="space-y-5 rounded-2xl border border-border/60 bg-card/95 p-4 shadow-lg sm:space-y-6 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
               <Link href="/">
